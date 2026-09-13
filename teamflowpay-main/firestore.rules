@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Wallet collection rules
+    match /wallets/{walletAddress} {
+      // Allow read/write access (for hackathon)
+      allow read: if true;
+      allow write: if true;
+      
+      // Transactions subcollection (immutable)
+      match /transactions/{transactionId} {
+        allow read: if true;
+        allow create: if true;
+        allow update, delete: if false; // Immutable
+      }
+    }
+    
+    // Top-level transactions collection (immutable)
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; // Immutable
+    }
+    
+    // Payment records collection (immutable)
+    match /payments/{paymentId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; // Immutable
+    }
+    
+    // AI commands collection (immutable - for audit trail)
+    match /ai_commands/{commandId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; // Immutable
+    }
+    
+    // All other collections (fully open for hackathon)
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="assets/images/icon.png">
+    <title>Profile - FlowPay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/theme.js"></script>
+    <script src="js/config.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #1976D2 0%, #26A69A 100%);
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, #1976D2 0%, #26A69A 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <img src="assets/images/logo.png" alt="FlowPay Logo" class="h-10 dark:hidden">
+                    <img src="assets/images/dark-logo.png" alt="FlowPay Logo" class="h-10 hidden dark:block">
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleTheme()" id="themeIcon"
+                        class="w-9 h-9 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div
+                        class="hidden sm:block px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-sm text-purple-700 dark:text-purple-300 font-medium">
+                        <i class="fas fa-circle text-green-500 text-xs mr-1"></i>
+                        Polygon
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleProfileMenu()" id="profileMenuButton"
+                            class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                            <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                        </button>
+                        <div id="profileDropdown"
+                            class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+                            <a href="profile.html"
+                                class="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle text-purple-600"></i>
+                                <span>My Profile</span>
+                            </a>
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <button onclick="handleLogout()"
+                                class="w-full flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <div class="flex items-center gap-4 mb-2">
+                <button type="button" onclick="history.back()"
+                    class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center hover:shadow-lg transition">
+                    <i class="fas fa-arrow-left text-white text-sm"></i>
+                </button>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-0">My Profile</h1>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-6">
+        <div class="flex items-center gap-2 mb-6">
+            <i class="fas fa-user-circle text-purple-600 text-xl"></i>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Personal Details</h2>
+        </div>
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex flex-col items-center">
+                <div class="w-32 h-32 rounded-full overflow-hidden mb-4 bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center"
+                    id="profilePictureContainer">
+                    <img id="profilePicture" src="" alt="Profile" class="w-full h-full object-cover hidden">
+                    <i class="fas fa-user text-white text-5xl" id="defaultProfileIcon"></i>
+                </div>
+                <button onclick="changeProfilePicture()"
+                    class="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium">
+                    <i class="fas fa-camera mr-1"></i>Change Photo
+                </button>
+            </div>
+            <div class="flex-1">
+                <form id="personalDetailsForm" class="space-y-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First
+                                Name</label>
+                            <input type="text" id="firstName"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Enter first name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last
+                                Name</label>
+                            <input type="text" id="lastName"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Enter last name">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email
+                            Address</label>
+                        <input type="email" id="email"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="your.email@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Authentication
+                            Method</label>
+                        <div class="flex items-center gap-2">
+                            <span id="authMethodBadge"
+                                class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium">
+                                <i class="fas fa-google mr-1"></i>Google
+                            </span>
+                        </div>
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit"
+                            class="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
+                            <i class="fas fa-save mr-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-6">
+            <i class="fas fa-wallet text-purple-600 text-xl"></i>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Manage Wallet</h2>
+        </div>
+        <div id="walletConnectedSection" class="hidden">
+            <div
+                class="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-6 mb-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Connected Wallet</p>
+                        <div class="flex items-center gap-2 mb-4">
+                            <p class="font-mono text-lg font-semibold text-gray-900 dark:text-gray-100"
+                                id="connectedWalletAddress">0x742d...5e89</p>
+                            <button onclick="copyWalletAddress()"
+                                class="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Balance</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100" id="walletBalance">0.0000
+                                    MATIC</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Network</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Polygon (MATIC)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="disconnectWallet()"
+                            class="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium">
+                            <i class="fas fa-unlink mr-1"></i>Disconnect
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div
+                            class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-key text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">Private Key</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">Managed by MetaMask</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div
+                            class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">Security</h3>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">Protected by MetaMask</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="noWalletSection" class="hidden text-center py-8">
+            <div
+                class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-wallet text-gray-400 dark:text-gray-500 text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No Wallet Connected</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Connect your MetaMask wallet to send and receive payments
+            </p>
+            <button onclick="connectMetaMaskFromProfile()"
+                class="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-purple-700 transition inline-flex items-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 40 40" fill="none">
+                    <path d="M33.76 5.25L21.5 14.25L23.75 9.25L33.76 5.25Z" fill="#E17726" />
+                    <path d="M6.24 5.25L18.38 14.33L16.25 9.25L6.24 5.25Z" fill="#E27625" />
+                </svg>
+                <span>Connect MetaMask</span>
+            </button>
+        </div>
+    </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+
+</html>

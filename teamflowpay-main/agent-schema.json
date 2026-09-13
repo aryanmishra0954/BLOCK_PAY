@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FlowPay AI Command Schema",
+  "description": "Schema for AI-generated commands in FlowPay",
+  "type": "object",
+  "required": ["action"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "create_payment",
+        "show_pending_payments",
+        "export_report",
+        "set_reminder",
+        "add_client"
+      ]
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "create_payment": {
+      "properties": {
+        "action": {
+          "const": "create_payment"
+        },
+        "data": {
+          "type": "object",
+          "required": ["vendor", "amount"],
+          "properties": {
+            "vendor": {
+              "type": "string",
+              "description": "Name of the vendor/recipient"
+            },
+            "amount": {
+              "type": "number",
+              "description": "Payment amount"
+            },
+            "currency": {
+              "type": "string",
+              "default": "INR",
+              "description": "Currency code"
+            },
+            "due_date": {
+              "type": "string",
+              "format": "date",
+              "description": "Due date in YYYY-MM-DD format"
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional payment description"
+            }
+          }
+        }
+      }
+    },
+    "show_pending_payments": {
+      "properties": {
+        "action": {
+          "const": "show_pending_payments"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "filter": {
+              "type": "string",
+              "enum": ["all", "overdue", "upcoming"],
+              "default": "all"
+            },
+            "vendor": {
+              "type": "string",
+              "description": "Filter by specific vendor"
+            }
+          }
+        }
+      }
+    },
+    "export_report": {
+      "properties": {
+        "action": {
+          "const": "export_report"
+        },
+        "data": {
+          "type": "object",
+          "required": ["period"],
+          "properties": {
+            "period": {
+              "type": "string",
+              "description": "Report period (e.g., 'November', 'Q4', '2025')"
+            },
+            "format": {
+              "type": "string",
+              "enum": ["csv", "pdf", "json"],
+              "default": "csv"
+            }
+          }
+        }
+      }
+    },
+    "set_reminder": {
+      "properties": {
+        "action": {
+          "const": "set_reminder"
+        },
+        "data": {
+          "type": "object",
+          "required": ["message", "date"],
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "Reminder message"
+            },
+            "date": {
+              "type": "string",
+              "format": "date",
+              "description": "Reminder date in YYYY-MM-DD format"
+            },
+            "time": {
+              "type": "string",
+              "format": "time",
+              "description": "Optional time in HH:MM format"
+            }
+          }
+        }
+      }
+    },
+    "add_client": {
+      "properties": {
+        "action": {
+          "const": "add_client"
+        },
+        "data": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Client/vendor name"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Client email address"
+            },
+            "wallet_address": {
+              "type": "string",
+              "description": "Blockchain wallet address"
+            },
+            "phone": {
+              "type": "string",
+              "description": "Contact phone number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="assets/images/icon.png" />
+    <title>Send Money - FlowPay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+      };
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="js/theme.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #1976d2 0%, #26a69a 100%);
+      }
+      .logo-text {
+        background: linear-gradient(135deg, #1976d2 0%, #26a69a 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <nav
+      class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-2">
+            <img
+              src="assets/images/logo.png"
+              alt="FlowPay Logo"
+              class="h-10 dark:hidden"
+            />
+            <img
+              src="assets/images/dark-logo.png"
+              alt="FlowPay Logo"
+              class="h-10 hidden dark:block"
+            />
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              onclick="toggleTheme()"
+              id="themeIcon"
+              class="w-9 h-9 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              <i class="fas fa-moon"></i>
+            </button>
+            <div
+              class="hidden sm:block px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-sm text-purple-700 dark:text-purple-300 font-medium"
+            >
+              <i class="fas fa-circle text-green-500 text-xs mr-1"></i>
+              Polygon
+            </div>
+            <div class="relative">
+              <button
+                onclick="toggleProfileMenu()"
+                id="profileMenuButton"
+                class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2 rounded-lg transition"
+              >
+                <div
+                  class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center"
+                >
+                  <i class="fas fa-user text-white text-sm"></i>
+                </div>
+              </button>
+              <div
+                id="profileDropdown"
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
+              >
+                <a
+                  href="profile.html"
+                  class="flex items-center gap-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                >
+                  <i class="fas fa-user-circle text-purple-600"></i>
+                  <span>My Profile</span>
+                </a>
+                <div
+                  class="border-t border-gray-200 dark:border-gray-700 my-1"
+                ></div>
+                <button
+                  onclick="logout()"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                >
+                  <i class="fas fa-sign-out-alt"></i>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-6">
+        <div class="flex items-center gap-4 mb-2">
+          <button
+            type="button"
+            onclick="history.back()"
+            class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center hover:shadow-lg transition"
+          >
+            <i class="fas fa-arrow-left text-white text-sm"></i>
+          </button>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-0">
+            Send Money
+          </h1>
+        </div>
+      </div>
+      <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-2xl shadow-sm p-6">
+            <form id="sendForm" onsubmit="handleSendTransaction(event)">
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Receiver Wallet Address
+                </label>
+                <div class="relative">
+                  <input
+                    type="text"
+                    id="receiverAddress"
+                    placeholder="0x742d35Cc6634C0532925a3b844Bc9e5e89Fe5e89"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onclick="pasteAddress()"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-700"
+                  >
+                    <i class="fas fa-paste"></i>
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                  Enter a valid Polygon wallet address
+                </p>
+              </div>
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Amount
+                </label>
+                <div class="flex gap-3">
+                  <div class="flex-1 relative">
+                    <input
+                      type="number"
+                      id="amount"
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0.01"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                      oninput="updateConversion()"
+                      required
+                    />
+                  </div>
+                  <select
+                    id="currency"
+                    class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    onchange="updateConversion()"
+                  >
+                    <option value="POL">POL</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="INR">INR</option>
+                  </select>
+                </div>
+                <div class="mt-2 flex justify-between text-sm">
+                  <span class="text-gray-600" id="availableBalance"
+                    >Available:
+                    <span class="font-semibold">0.00 POL</span></span
+                  >
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      onclick="refreshBalance()"
+                      class="text-blue-600 hover:text-blue-700 font-medium"
+                      title="Refresh balance"
+                    >
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button
+                      type="button"
+                      onclick="setMaxAmount()"
+                      class="text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      Max
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-100"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm text-gray-600">Conversion</span>
+                  <i class="fas fa-exchange-alt text-purple-600"></i>
+                </div>
+                <div id="conversionDisplay" class="space-y-1">
+                  <p class="text-sm font-medium text-gray-900">
+                    <span id="fromAmount">0.00</span>
+                    <span id="fromCurrency">POL</span>
+                  </p>
+                  <p class="text-lg font-bold text-purple-600">
+                    ≈ <span id="toAmount">0.00</span>
+                    <span id="toCurrency">USD</span>
+                  </p>
+                </div>
+                <p class="text-xs text-gray-600">
+                  Rate: 1 <span id="rateFromCurrency">POL</span> =
+                  <span id="exchangeRate">0.68</span>
+                  <span id="rateCurrency">USD</span>
+                </p>
+              </div>
+              <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">
+                      Estimated Gas Fee
+                      <i
+                        id="gasLoadingIcon"
+                        class="fas fa-sync-alt text-xs text-gray-400 ml-1"
+                      ></i>
+                    </p>
+                    <p class="text-xs text-gray-500">Network: Polygon</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-bold text-gray-900">
+                      <span id="gasFee">0.0023 POL</span>
+                    </p>
+                    <p class="text-xs text-gray-500" id="gasFeeUsd">≈ $0.002</p>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="mb-6 p-4 border-2 border-purple-200 rounded-xl bg-purple-50"
+              >
+                <div class="flex justify-between items-center">
+                  <p class="font-medium text-gray-700">Total (incl. fees)</p>
+                  <div class="text-right">
+                    <p class="text-xl font-bold text-gray-900" id="totalAmount">
+                      0.00 POL
+                    </p>
+                    <p class="text-sm text-gray-600" id="totalUsd">≈ $0.00</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="submit"
+                class="w-full gradient-bg text-white font-semibold py-4 rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5"
+              >
+                <i class="fas fa-paper-plane mr-2"></i>
+                Send Payment
+              </button>
+            </form>
+          </div>
+        </div>
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            <h3 class="font-semibold text-gray-900 mb-4">
+              Transaction Preview
+            </h3>
+            <div class="space-y-3 text-sm">
+              <div>
+                <p class="text-gray-600 mb-1">From</p>
+                <p class="font-mono text-xs text-gray-900" id="previewFrom">
+                  Loading...
+                </p>
+              </div>
+              <div>
+                <p class="text-gray-600 mb-1">To</p>
+                <p class="font-mono text-xs text-gray-900" id="previewTo">
+                  Not set
+                </p>
+              </div>
+              <div class="pt-3 border-t border-gray-100">
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-600">Amount</span>
+                  <span class="font-semibold text-gray-900" id="previewAmount"
+                    >0.00 POL</span
+                  >
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Status</span>
+                  <span class="text-yellow-600 font-medium" id="previewStatus"
+                    >Pending</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-blue-50 rounded-2xl shadow-sm p-6 border border-blue-100"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fas fa-shield-alt text-blue-600"></i>
+              <h3 class="font-semibold text-gray-900">Security Tips</h3>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-700">
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                <span>Always verify the receiver's address</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                <span>Transactions cannot be reversed</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                <span>Check gas fees before sending</span>
+              </li>
+            </ul>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+            <h3 class="font-semibold text-gray-900 mb-3">Recent Recipients</h3>
+            <div id="recentRecipientsList" class="space-y-2">
+              <p class="text-sm text-gray-500 text-center py-4">
+                Loading recent recipients...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      id="successModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+        <div class="text-center">
+          <div
+            class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-check text-green-600 text-2xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">
+            Transaction Sent! 🎉
+          </h3>
+          <p class="text-gray-600 mb-2">
+            Your payment has been submitted to the blockchain
+          </p>
+          <p class="text-sm text-purple-600 mb-4">
+            <i class="fas fa-info-circle"></i> It may take 30-60 seconds to
+            confirm
+          </p>
+          <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Amount</span>
+                <span class="font-semibold" id="modalAmount">0.00 MATIC</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">To</span>
+                <span class="font-mono text-xs" id="modalReceiver">0x...</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Status</span>
+                <span class="text-green-600 font-medium">Success</span>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <p class="text-xs text-gray-600 mb-1">Transaction Hash</p>
+              <div class="flex items-center gap-2">
+                <p
+                  class="font-mono text-xs text-gray-900 flex-1 truncate"
+                  id="txHash"
+                >
+                  0x1a2b3c...
+                </p>
+                <button
+                  onclick="copyTxHash()"
+                  class="text-purple-600 hover:text-purple-700"
+                >
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <a
+                href="#"
+                id="polygonScanLink"
+                target="_blank"
+                class="text-xs text-purple-600 hover:text-purple-700 mt-2 inline-block"
+              >
+                View on PolygonScan
+                <i class="fas fa-external-link-alt text-xs"></i>
+              </a>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <button
+              onclick="closeModal()"
+              class="flex-1 px-6 py-3 border border-gray-300 rounded-xl font-medium hover:bg-gray-50 transition"
+            >
+              Close
+            </button>
+            <a
+              href="history.html"
+              class="flex-1 px-6 py-3 gradient-bg text-white rounded-xl font-medium text-center hover:shadow-lg transition"
+            >
+              View History
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@web3auth/modal@9/dist/modal.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@web3auth/base@9/dist/base.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@web3auth/ethereum-provider@9/dist/ethereumProvider.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-service.js"></script>
+    <script src="js/send.js"></script>
+  </body>
+</html>
