@@ -1,0 +1,30 @@
+{
+  "name": "BlockPay-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@web3auth/ethereum-provider": "^8.6.2",
+    "@web3auth/modal": "^8.6.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.441.0",
+    "qrcode.react": "^4.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "tailwind-merge": "^2.5.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.11",
+    "vite": "^5.4.6",
+    "vite-plugin-node-polyfills": "^0.22.0"
+  }
+}

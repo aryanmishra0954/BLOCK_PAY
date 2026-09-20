@@ -1,6 +1,0 @@
-node_modules
-.env.local
-.env.development
-*.log
-.DS_Store
-test.js

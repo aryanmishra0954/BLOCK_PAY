@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="/blockpay-logo.jpg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlockPay — Fast, Simple Crypto Payments on Polygon</title>
+    <!-- Multi-Typeface System: Space Grotesk (Headings), Plus Jakarta Sans (Interface), IBM Plex Mono (Financial Data) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      window.global = window;
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      window.process.browser = true;
+      window.process.version = "";
+      window.process.versions = {};
+      window.process.nextTick = function (cb, ...args) {
+        return Promise.resolve().then(() => cb(...args));
+      };
+    </script>
+  </head>
+  <body class="bg-zinc-950 text-zinc-100 min-h-screen font-sans selection:bg-emerald-500/20 selection:text-emerald-400 antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

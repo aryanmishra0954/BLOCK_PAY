@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="16" fill="#101216"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="15.5" stroke="#252a36"/>
+  <defs>
+    <linearGradient id="svgFVert" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="svgFTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="svgFEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <!-- FlowPay 'F' Mark -->
+  <rect x="14" y="14" width="8" height="36" rx="4" fill="url(#svgFVert)"/>
+  <rect x="20" y="14" width="28" height="8" rx="4" fill="url(#svgFTop)"/>
+  <rect x="20" y="28" width="21" height="7.5" rx="3.75" fill="url(#svgFEmerald)"/>
+  <circle cx="45" cy="31.75" r="2.25" fill="#34d399" opacity="0.9"/>
+</svg>

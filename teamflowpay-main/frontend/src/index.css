@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0a0b0d;
+    color: #f1f3f7;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
+
+/* Ambient Topographic Wave (Institutional Watermark) */
+.ambient-flow-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 920px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-flow-image {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1440px;
+  max-width: 125vw;
+  height: 780px;
+  object-fit: cover;
+  object-position: center;
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 32%, black 20%, transparent 85%);
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 32%, black 20%, transparent 85%);
+  opacity: 0.28;
+  filter: grayscale(0.25) contrast(1.15) brightness(0.92);
+}
+
+.ambient-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 25%, black 15%, transparent 85%);
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 25%, black 15%, transparent 85%);
+}
+
+.ambient-flow-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 35%, rgba(10, 11, 13, 0.85) 75%, #0a0b0d 100%);
+}
+
+/* Subtle Structural Financial Grid for Dashboards */
+.page-ambient-grid {
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* High-Precision Corporate UI Tokens */
+.glass-surface {
+  background: rgba(13, 15, 18, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel {
+  background: rgba(16, 18, 22, 0.8);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-base {
+  background: #111317;
+  border: 1px solid #1f232b;
+  border-radius: 0.875rem;
+}
+
+.btn-primary {
+  background: #f4f5f8;
+  color: #0b0c0e;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.btn-primary:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.12);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: #15181e;
+  color: #e1e4ea;
+  border: 1px solid #242933;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover {
+  background: #1c2028;
+  color: #ffffff;
+  border-color: #343b47;
+}
+
+.input-base {
+  width: 100%;
+  background: rgba(19, 22, 28, 0.9);
+  border: 1px solid #242933;
+  border-radius: 0.625rem;
+  color: #f1f3f7;
+  transition: all 0.15s ease;
+}
+.input-base:focus {
+  outline: none;
+  border-color: #586274;
+  box-shadow: 0 0 0 1px #586274;
+}
+
+/* Precision Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0b0d;
+}
+::-webkit-scrollbar-thumb {
+  background: #20242c;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #313743;
+}

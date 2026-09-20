@@ -1,0 +1,31 @@
+<svg width="240" height="64" viewBox="0 0 240 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fullLogoFVert" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="fullLogoFTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="fullLogoFEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logo Mark Container -->
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="#101216"/>
+  <rect x="8.5" y="8.5" width="47" height="47" rx="11.5" stroke="#252a36"/>
+
+  <!-- 'F' Monogram -->
+  <rect x="18" y="18" width="6.5" height="28" rx="3" fill="url(#fullLogoFVert)"/>
+  <rect x="23" y="18" width="22" height="6.5" rx="3" fill="url(#fullLogoFTop)"/>
+  <rect x="23" y="29.5" width="16" height="6" rx="3" fill="url(#fullLogoFEmerald)"/>
+  <circle cx="43" cy="32.5" r="2" fill="#34d399" opacity="0.9"/>
+
+  <!-- Brand Typography -->
+  <text x="68" y="38" fill="#ffffff" font-family="'Space Grotesk', system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.5px">FlowPay</text>
+  <rect x="165" y="24" width="46" height="18" rx="4" fill="#16181f" stroke="#252a36"/>
+  <text x="188" y="36.5" fill="#94a3b8" font-family="'IBM Plex Mono', monospace" font-size="10" font-weight="600" text-anchor="middle">AMOY</text>
+</svg>

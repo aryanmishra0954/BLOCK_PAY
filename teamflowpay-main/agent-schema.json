@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "FlowPay AI Command Schema",
-  "description": "Schema for AI-generated commands in FlowPay",
+  "title": "BlockPay AI Command Schema",
+  "description": "Schema for AI-generated commands in BlockPay",
   "type": "object",
   "required": ["action"],
   "properties": {

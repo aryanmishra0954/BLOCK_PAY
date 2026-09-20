@@ -36,11 +36,11 @@ A modern payment management system built with blockchain technology and AI-power
 
 ### Backend
 
-- Node.js with Express.js
+- Python 3.11+ with Flask
+- SQLite persistent database (`flowpay.db`)
 - Groq AI (llama-3.3-70b-versatile) for NLP
-- Axios for API requests
-- CORS enabled
-- Serverless deployment ready
+- CORS & non-custodial session authentication
+- Serverless / WSGI deployment ready
 
 ### Blockchain
 
@@ -52,26 +52,35 @@ A modern payment management system built with blockchain technology and AI-power
 
 ### Prerequisites
 
-- Node.js v18+ installed
+- Python 3.10+ installed
 - Git installed
 - A Groq API key (free at https://console.groq.com/keys)
 
-### Backend Setup
+### Backend Setup (Flask)
 
-1. Clone the repository:
-
-```bash
-git clone https://github.com/siddharthjha-30/teamflowpay.git
-cd teamflowpay/backend
-```
-
-2. Install dependencies:
+1. Navigate to the backend directory:
 
 ```bash
-npm install
+cd backend_flask
 ```
 
-3. Configure environment variables:
+2. Create and activate a virtual environment:
+
+```bash
+python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+3. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Configure environment variables:
 
 ```bash
 cp .env.example .env
@@ -81,15 +90,15 @@ Edit `.env` and add your Groq API key:
 
 ```env
 PORT=3000
-NODE_ENV=development
+FLASK_ENV=development
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:5500
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
-4. Start the server:
+5. Start the Flask server:
 
 ```bash
-npm start
+python app.py
 ```
 
 Backend will run at: `http://localhost:3000`
@@ -249,25 +258,29 @@ url: "https://your-backend.vercel.app";
 
 ```
 teamflowpay/
-├── backend/
+├── backend_flask/
 │   ├── services/
-│   │   ├── aiService.js          # Groq AI integration
-│   │   └── commandExecutor.js    # Command execution logic
+│   │   ├── ai_service.py         # Groq AI integration
+│   │   └── command_executor.py   # Command execution logic
 │   ├── routes/
-│   │   └── agent.js               # API routes
+│   │   ├── agent.py              # AI agent API routes
+│   │   ├── auth.py               # Auth & session API routes
+│   │   └── transactions.py       # Transactions ledger API routes
 │   ├── data/
-│   │   └── database.js            # In-memory database
-│   ├── server.js                  # Express server
-│   ├── package.json
+│   │   ├── db.py                 # SQLite database engine
+│   │   └── flowpay.db            # Persistent database file
+│   ├── app.py                    # Flask application
+│   ├── requirements.txt
 │   ├── .env.example
 │   └── vercel.json
 ├── js/
-│   ├── auth.js                    # Authentication logic
-│   ├── config.js                  # Configuration
-│   ├── dashboard.js               # Dashboard logic
-│   ├── firebase-config.js         # Firebase setup
-│   ├── firebase-service.js        # Firebase operations
-│   ├── theme.js                   # Dark mode toggle
+│   ├── api.js                    # Unified backend API client
+│   ├── auth.js                   # Authentication logic
+│   ├── config.js                 # Configuration
+│   ├── dashboard.js              # Dashboard logic
+│   ├── firebase-config.js        # Firebase setup
+│   ├── firebase-service.js       # Firebase operations
+│   ├── theme.js                  # Dark mode manager
 │   └── ...
 ├── css/
 │   └── styles.css
