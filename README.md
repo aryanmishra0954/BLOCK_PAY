@@ -26,4 +26,68 @@
 
 ---
 
-## 🏛️ System Architecture
+## 🛠️ Tech Stack
+
+### Frontend
+* **Framework**: [React 18](https://react.dev/) + [Vite 5](https://vitejs.dev/)
+* **Routing**: [React Router DOM v6](https://reactrouter.com/)
+* **Styling**: [Tailwind CSS v3](https://tailwindcss.com/) with institutional dark theme
+* **Web3 Integration**: EIP-1193 native browser provider, `@web3auth/modal`, `@web3auth/ethereum-provider`
+* **Icons & QR**: `lucide-react`, `qrcode.react`
+* **Polyfills**: `vite-plugin-node-polyfills` (`Buffer`, `Process`, `Global`)
+
+### Backend
+* **Runtime**: Python 3.10+
+* **Framework**: [Flask 3](https://flask.palletsprojects.com/) (Modular Blueprint Architecture)
+* **Database**: Persistent SQLite with connection pooling (`BlockPay.db`)
+* **AI Provider**: [Groq Cloud API](https://groq.com/) running `llama-3.3-70b-versatile`
+* **Security**: Werkzeug password hashing, non-custodial session tokens, EIP-191 verification
+
+---
+
+## 🚀 Quickstart Guide
+
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v18 or higher)
+* [Python](https://www.python.org/) (v3.10 or higher)
+* [MetaMask](https://metamask.io/) browser extension (optional, for real on-chain transfers)
+* [Groq API Key](https://console.groq.com/keys) (free tier available)
+
+---
+
+### 1. Clone the Repository
+```bash
+
+git clone https://github.com/your-username/BlockPay.git
+cd BlockPay
+
+# Navigate to backend directory
+cd backend_flask
+
+# Create and activate virtual environment
+python -m venv venv
+
+# Windows:
+.\venv\Scripts\activate
+# macOS / Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables (.env):
+PORT=3000
+FLASK_ENV=development
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+GROQ_API_KEY=your_groq_api_key_here
+
+python app.py
+
+# Navigate to frontend directory
+cd frontend
+
+# Install Node dependencies
+npm install
+
+# Start Vite dev server
+npm run dev
