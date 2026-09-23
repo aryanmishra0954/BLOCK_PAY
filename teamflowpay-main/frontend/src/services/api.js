@@ -29,6 +29,10 @@ export const BlockPayAPI = {
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
+    const userEmail = localStorage.getItem("userEmail") || "trader@BlockPay.io";
+    const walletAddress = localStorage.getItem("walletAddress") || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+    headers["X-User-Email"] = userEmail;
+    headers["X-Wallet-Address"] = walletAddress;
 
     try {
       const response = await fetch(url, {
@@ -153,21 +157,22 @@ export const BlockPayAPI = {
 
   contacts: {
     async getAll() {
-      const email = localStorage.getItem("userEmail");
-      const url = `/api/contacts${email ? `?email=${encodeURIComponent(email)}` : ""}`;
+      const email = localStorage.getItem("userEmail") || "trader@BlockPay.io";
+      const url = `/api/contacts?email=${encodeURIComponent(email)}`;
       return await BlockPayAPI.request(url, { method: "GET" });
     },
 
     async create({ name, address, email }) {
-      const userEmail = localStorage.getItem("userEmail");
+      const userEmail = localStorage.getItem("userEmail") || "trader@BlockPay.io";
+      const walletAddress = localStorage.getItem("walletAddress") || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
       return await BlockPayAPI.request("/api/contacts", {
         method: "POST",
-        body: JSON.stringify({ name, address, email, email_user: userEmail }),
+        body: JSON.stringify({ name, address, email, email_user: userEmail, wallet_address: walletAddress }),
       });
     },
 
     async update(contactId, { name, address, email }) {
-      const userEmail = localStorage.getItem("userEmail");
+      const userEmail = localStorage.getItem("userEmail") || "trader@BlockPay.io";
       return await BlockPayAPI.request(`/api/contacts/${contactId}`, {
         method: "PUT",
         body: JSON.stringify({ name, address, email, email_user: userEmail }),
@@ -175,8 +180,8 @@ export const BlockPayAPI = {
     },
 
     async delete(contactId) {
-      const userEmail = localStorage.getItem("userEmail");
-      const url = `/api/contacts/${contactId}${userEmail ? `?email=${encodeURIComponent(userEmail)}` : ""}`;
+      const userEmail = localStorage.getItem("userEmail") || "trader@BlockPay.io";
+      const url = `/api/contacts/${contactId}?email=${encodeURIComponent(userEmail)}`;
       return await BlockPayAPI.request(url, { method: "DELETE" });
     },
   },

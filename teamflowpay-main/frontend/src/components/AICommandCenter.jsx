@@ -53,7 +53,23 @@ export default function AICommandCenter({ onCommandExecuted }) {
       if (res.action === "create_payment") {
         const params = res.command?.parameters || res.command?.data || {};
         const amount = params.amount || 50;
-        const recipient = params.recipient || params.vendor || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+        let recipient = params.recipient || params.vendor || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+
+        if (!recipient.startsWith("0x")) {
+          try {
+            const contactsRes = await BlockPayAPI.contacts.getAll();
+            if (contactsRes?.contacts?.length) {
+              const matched = contactsRes.contacts.find(
+                (c) => c.name?.toLowerCase().includes(recipient.toLowerCase()) || recipient.toLowerCase().includes(c.name?.toLowerCase())
+              );
+              if (matched?.address) {
+                recipient = matched.address;
+              }
+            }
+          } catch (cErr) {
+            console.warn("Contact lookup notice:", cErr);
+          }
+        }
 
         try {
           if (recipient.startsWith("0x")) {

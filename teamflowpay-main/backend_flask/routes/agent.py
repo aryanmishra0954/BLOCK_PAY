@@ -29,9 +29,10 @@ def command():
 
         validation = validate_command(ai_command)
         if not validation["valid"]:
+            err_msg = validation["errors"][0] if validation["errors"] else "AI generated invalid command"
             return jsonify({
                 "success": False,
-                "error": "AI generated invalid command",
+                "error": err_msg,
                 "details": validation["errors"],
                 "command": ai_command,
             }), 400
@@ -61,8 +62,9 @@ def execute():
 
         validation = validate_command(command_body)
         if not validation["valid"]:
+            err_msg = validation["errors"][0] if validation["errors"] else "Invalid command"
             return jsonify({
-                "error": "Invalid command",
+                "error": err_msg,
                 "details": validation["errors"],
             }), 400
 

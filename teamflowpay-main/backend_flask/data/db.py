@@ -2,6 +2,7 @@ import os
 import uuid
 import secrets
 import sqlite3
+import urllib.parse
 from datetime import datetime, timezone
 
 try:
@@ -13,7 +14,34 @@ except ImportError:
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "BlockPay.db")
 ACTIVE_ENGINE = "sqlite"
-POSTGRES_FAILED = False
+POSTGRES_CHECKED = False
+
+def get_db_url() -> str:
+    url = (os.environ.get("DATABASE_URL") or os.environ.get("DB_CONNECTION_STRING") or "").strip()
+    return url
+
+def ensure_postgres_database(db_url: str):
+    if not PSYCOPG2_AVAILABLE:
+        return
+    try:
+        parsed = urllib.parse.urlparse(db_url)
+        target_db = parsed.path.lstrip("/")
+        if not target_db or target_db in ["postgres", "template1"]:
+            return
+        maintenance_url = db_url.rsplit("/", 1)[0] + "/postgres"
+        conn = psycopg2.connect(maintenance_url, connect_timeout=3)
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (target_db,))
+        exists = cur.fetchone()
+        if not exists:
+            print(f"[*] PostgreSQL database '{target_db}' does not exist. Creating automatically...")
+            cur.execute(f'CREATE DATABASE "{target_db}"')
+            print(f"[✓] Created PostgreSQL database '{target_db}' successfully!")
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
 
 class PostgresCursorWrapper:
     def __init__(self, raw_cursor):
@@ -102,16 +130,22 @@ def get_active_engine() -> str:
     return ACTIVE_ENGINE
 
 def get_db_connection():
-    global ACTIVE_ENGINE, POSTGRES_FAILED
-    db_url = os.environ.get("DATABASE_URL", "").strip()
-    if PSYCOPG2_AVAILABLE and db_url and not POSTGRES_FAILED and (db_url.startswith("postgresql://") or db_url.startswith("postgres://")):
+    global ACTIVE_ENGINE, POSTGRES_CHECKED
+    db_url = get_db_url()
+
+    if PSYCOPG2_AVAILABLE and db_url and (db_url.startswith("postgresql://") or db_url.startswith("postgres://")):
+        if not POSTGRES_CHECKED:
+            ensure_postgres_database(db_url)
+            POSTGRES_CHECKED = True
+
         try:
             raw_conn = psycopg2.connect(db_url, connect_timeout=3)
             ACTIVE_ENGINE = "postgresql"
             return PostgresConnectionWrapper(raw_conn)
         except Exception as e:
-            POSTGRES_FAILED = True
-            print(f"[DB] PostgreSQL connection attempt failed ({e}). Using SQLite.")
+            if not POSTGRES_CHECKED:
+                print(f"[DB] PostgreSQL unavailable ({e}). Using SQLite fallback.")
+            POSTGRES_CHECKED = True
 
     ACTIVE_ENGINE = "sqlite"
     conn = sqlite3.connect(DB_PATH)

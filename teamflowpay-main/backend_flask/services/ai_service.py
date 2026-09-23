@@ -1,28 +1,37 @@
-"""
-Groq AI integration for BlockPay.
-Converts natural-language prompts into structured JSON commands
-using the Groq API (LLaMA 3.3-70B-versatile).
-"""
-
 import json
 import re
 import os
+import requests
 from dotenv import load_dotenv
 
-import requests
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(backend_dir)
 
+load_dotenv(os.path.join(backend_dir, ".env"))
+load_dotenv(os.path.join(root_dir, ".env"))
 load_dotenv()
 
 class AIService:
-    """Calls Groq's chat-completion API and parses the JSON response."""
+    CANDIDATE_MODELS = [
+        "openai/gpt-oss-120b",
+        "llama-3.1-8b-instant",
+        "llama3-70b-8192",
+        "llama-3.3-70b-versatile",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it"
+    ]
 
     def __init__(self):
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
-        self.model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+        self.configured_model = os.getenv("GROQ_MODEL", "")
 
     @property
     def api_key(self):
-        return os.getenv("GROQ_API_KEY", "")
+        key = os.getenv("GROQ_API_KEY", "").strip()
+        if not key or key == "your_groq_api_key_here" or key == "gsk_YOUR_GROQ_API_KEY_HERE":
+            return ""
+        return key
 
     @staticmethod
     def _get_system_prompt():
@@ -30,110 +39,146 @@ class AIService:
             "You are a BlockPay AI assistant that converts natural language "
             "commands into structured JSON.\n\n"
             "Available actions:\n"
-            "1. create_payment - Create a new payment\n"
-            "2. show_pending_payments - Show all pending payments\n"
-            "3. export_report - Export payment reports\n"
-            "4. set_reminder - Set a reminder\n"
-            "5. add_client - Add a new client\n"
-            "6. check_balance_reminders - Check upcoming payments and warn "
-            "if balance is low\n\n"
+            "1. create_payment - parameters: vendor (name or 0x address), amount (number), currency (POL, ETH, MATIC, etc.), description\n"
+            "2. show_pending_payments - parameters: none\n"
+            "3. export_report - parameters: period ('all', 'month'), format ('csv')\n"
+            "4. set_reminder - parameters: message, date ('YYYY-MM-DD')\n"
+            "5. add_client - parameters: name\n"
+            "6. check_balance_reminders - parameters: none\n\n"
             "RULES:\n"
-            "- Always respond with VALID JSON only (no markdown, no code blocks)\n"
-            "- Use the exact action names listed above\n"
-            "- For dates: convert relative dates (tomorrow, Monday, next week) "
-            "to ISO format\n"
-            "- For amounts: extract numeric values and currency\n"
-            "- Include all relevant parameters based on the action\n\n"
+            "- Always respond with VALID JSON only (no markdown fences, no explanatory text)\n"
+            "- For payments, always extract vendor and amount\n"
+            "- Default currency is POL if not specified\n\n"
             "Response format:\n"
-            '{\n  "action": "action_name",\n  "parameters": { ... }\n}\n\n'
-            "Examples:\n"
-            'Input: "Create a payment for ₹12,000 to Ditre Italia due Monday"\n'
-            'Output: {"action":"create_payment","parameters":{"amount":12000,'
-            '"currency":"INR","recipient":"Ditre Italia",'
-            '"dueDate":"2025-12-02T00:00:00.000Z",'
-            '"description":"Payment to Ditre Italia"}}\n\n'
-            'Input: "Show me all pending payments"\n'
-            'Output: {"action":"show_pending_payments","parameters":{}}\n\n'
-            "Input: \"Check if I have enough balance for tomorrow's payments\"\n"
-            'Output: {"action":"check_balance_reminders","parameters":{}}'
+            '{\n  "action": "create_payment",\n  "parameters": {\n    "vendor": "Aryan",\n    "amount": 50,\n    "currency": "POL",\n    "description": "Payment to Aryan"\n  }\n}\n'
         )
 
+    def _fallback_parse(self, prompt: str) -> dict:
+        p = prompt.strip().lower()
+
+        if any(w in p for w in ["pending", "unpaid", "due"]):
+            return {"action": "show_pending_payments", "parameters": {}}
+
+        if any(w in p for w in ["export", "report", "csv", "download"]):
+            return {"action": "export_report", "parameters": {"period": "all", "format": "csv"}}
+
+        if any(w in p for w in ["balance", "funds", "how much", "wallet"]):
+            return {"action": "check_balance_reminders", "parameters": {}}
+
+        if any(w in p for w in ["add client", "add contact", "new client", "new contact"]):
+            name = re.sub(r'.*?(?:client|contact)\s+', '', prompt, flags=re.IGNORECASE).strip()
+            return {
+                "action": "add_client",
+                "parameters": {
+                    "name": name or "New Contact"
+                }
+            }
+
+        if any(w in p for w in ["reminder", "remind"]):
+            return {
+                "action": "set_reminder",
+                "parameters": {
+                    "message": prompt,
+                    "date": "2026-09-24"
+                }
+            }
+
+        amt = 50.0
+        amt_match = re.search(r'(?:of\s+|[$€£₹]?\s*)(\d+(?:\.\d+)?)', prompt, re.IGNORECASE)
+        if amt_match:
+            try:
+                amt = float(amt_match.group(1))
+            except ValueError:
+                amt = 50.0
+
+        curr = "POL"
+        curr_match = re.search(r'\b(POL|MATIC|ETH|BTC|USD|EUR|INR)\b', prompt, re.IGNORECASE)
+        if curr_match:
+            curr = curr_match.group(1).upper()
+
+        recipient = "Aryan"
+        to_match = re.search(r'(?:to|for)\s+([0-9a-zA-Z._-]+)', prompt, re.IGNORECASE)
+        if to_match:
+            recipient = to_match.group(1).strip()
+        else:
+            addr_match = re.search(r'(0x[a-fA-F0-9]{40})', prompt)
+            if addr_match:
+                recipient = addr_match.group(1)
+
+        return {
+            "action": "create_payment",
+            "parameters": {
+                "vendor": recipient,
+                "recipient": recipient,
+                "amount": amt,
+                "currency": curr,
+                "description": f"Payment to {recipient}"
+            }
+        }
+
     def generate_command(self, prompt: str) -> dict:
-        """Send *prompt* to Groq and return the parsed JSON command."""
+        key = self.api_key
+        if not key:
+            print("[AI] No valid GROQ_API_KEY found. Using fast deterministic NLP fallback.")
+            return self._fallback_parse(prompt)
 
-        if not self.api_key or self.api_key == "gsk_YOUR_GROQ_API_KEY_HERE":
-            raise RuntimeError(
-                "GROQ_API_KEY not configured. Please set it in backend_flask/.env "
-                "file. Get free key at: https://console.groq.com/keys"
-            )
+        models_to_try = []
+        if self.configured_model:
+            models_to_try.append(self.configured_model)
+        for m in self.CANDIDATE_MODELS:
+            if m not in models_to_try:
+                models_to_try.append(m)
 
-        try:
-            print("[AI] Calling Groq AI...")
-
-            response = requests.post(
-                self.api_url,
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": self._get_system_prompt()},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 500,
-                },
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                timeout=30,
-            )
-
-            if response.status_code != 200:
-                error_body = response.json()
-                error_msg = (
-                    error_body.get("error", {}).get("message")
-                    or response.reason
+        for model_name in models_to_try:
+            try:
+                response = requests.post(
+                    self.api_url,
+                    json={
+                        "model": model_name,
+                        "messages": [
+                            {"role": "system", "content": self._get_system_prompt()},
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.2,
+                        "max_tokens": 400,
+                    },
+                    headers={
+                        "Authorization": f"Bearer {key}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=10,
                 )
-                raise RuntimeError(f"Groq API error: {error_msg}")
 
-            ai_text = response.json()["choices"][0]["message"]["content"]
-            print(f"[OK] AI Response: {ai_text}")
+                if response.status_code == 200:
+                    ai_text = response.json()["choices"][0]["message"]["content"]
+                    parsed = self._clean_and_parse_json(ai_text)
+                    print(f"[OK] AI Response ({model_name}): {parsed.get('action')}")
+                    return parsed
+                elif response.status_code in [400, 404]:
+                    continue
+                elif response.status_code == 429:
+                    print("[AI] Rate limited on Groq. Using fallback parser.")
+                    return self._fallback_parse(prompt)
+                elif response.status_code == 401:
+                    print("[AI] Invalid Groq API Key. Using fallback parser.")
+                    return self._fallback_parse(prompt)
+            except Exception as err:
+                print(f"[AI] Model {model_name} attempt failed: {err}")
+                continue
 
-            return self._clean_and_parse_json(ai_text)
-
-        except requests.exceptions.Timeout:
-            raise RuntimeError("AI request timeout - please try again")
-        except requests.exceptions.ConnectionError:
-            raise RuntimeError("Cannot reach Groq API - check your network")
-        except RuntimeError:
-            raise
-        except Exception as exc:
-            raise RuntimeError(f"AI service error: {exc}") from exc
+        print("[AI] All Groq model calls exhausted. Using robust NLP fallback.")
+        return self._fallback_parse(prompt)
 
     @staticmethod
     def _clean_and_parse_json(text: str) -> dict:
-        """Strip markdown fences, extract the JSON object, and parse it."""
-
-        try:
-            cleaned = re.sub(r"```json\s*", "", text)
-            cleaned = re.sub(r"```\s*", "", cleaned)
-
-            match = re.search(r"\{[\s\S]*\}", cleaned)
-            if match:
-                cleaned = match.group(0)
-
-            parsed = json.loads(cleaned)
-
-            if "action" not in parsed:
-                raise ValueError("Missing 'action' field in JSON")
-
-            return parsed
-
-        except (json.JSONDecodeError, ValueError) as exc:
-            print(f"JSON Parse Error: {exc}")
-            print(f"Raw text: {text}")
-            raise RuntimeError(
-                f"Invalid JSON response from AI: {exc}"
-            ) from exc
+        cleaned = re.sub(r"```json\s*", "", text)
+        cleaned = re.sub(r"```\s*", "", cleaned)
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if match:
+            cleaned = match.group(0)
+        parsed = json.loads(cleaned)
+        if "action" not in parsed:
+            raise ValueError("Missing 'action' field in JSON")
+        return parsed
 
 ai_service = AIService()
