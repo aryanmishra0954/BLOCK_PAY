@@ -22,7 +22,6 @@
   }
 }
 
-/* Ambient Topographic Wave (Institutional Watermark) */
 .ambient-flow-container {
   position: absolute;
   top: 0;
@@ -66,7 +65,6 @@
   background: linear-gradient(to bottom, transparent 35%, rgba(10, 11, 13, 0.85) 75%, #0a0b0d 100%);
 }
 
-/* Subtle Structural Financial Grid for Dashboards */
 .page-ambient-grid {
   position: fixed;
   inset: 0;
@@ -77,7 +75,6 @@
   z-index: 0;
 }
 
-/* High-Precision Corporate UI Tokens */
 .glass-surface {
   background: rgba(13, 15, 18, 0.88);
   backdrop-filter: blur(16px);
@@ -142,7 +139,6 @@
   box-shadow: 0 0 0 1px #586274;
 }
 
-/* Precision Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

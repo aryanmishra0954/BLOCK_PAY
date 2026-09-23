@@ -13,7 +13,6 @@ import requests
 
 load_dotenv()
 
-
 class AIService:
     """Calls Groq's chat-completion API and parses the JSON response."""
 
@@ -24,10 +23,6 @@ class AIService:
     @property
     def api_key(self):
         return os.getenv("GROQ_API_KEY", "")
-
-    # ------------------------------------------------------------------ #
-    #  System Prompt                                                      #
-    # ------------------------------------------------------------------ #
 
     @staticmethod
     def _get_system_prompt():
@@ -62,10 +57,6 @@ class AIService:
             "Input: \"Check if I have enough balance for tomorrow's payments\"\n"
             'Output: {"action":"check_balance_reminders","parameters":{}}'
         )
-
-    # ------------------------------------------------------------------ #
-    #  Public API                                                         #
-    # ------------------------------------------------------------------ #
 
     def generate_command(self, prompt: str) -> dict:
         """Send *prompt* to Groq and return the parsed JSON command."""
@@ -119,10 +110,6 @@ class AIService:
         except Exception as exc:
             raise RuntimeError(f"AI service error: {exc}") from exc
 
-    # ------------------------------------------------------------------ #
-    #  JSON Cleaning                                                      #
-    # ------------------------------------------------------------------ #
-
     @staticmethod
     def _clean_and_parse_json(text: str) -> dict:
         """Strip markdown fences, extract the JSON object, and parse it."""
@@ -149,6 +136,4 @@ class AIService:
                 f"Invalid JSON response from AI: {exc}"
             ) from exc
 
-
-# Singleton instance
 ai_service = AIService()

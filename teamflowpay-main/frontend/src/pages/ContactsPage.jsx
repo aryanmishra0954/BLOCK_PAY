@@ -24,7 +24,6 @@ export default function ContactsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState(null);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
   const [formName, setFormName] = useState("");
@@ -149,7 +148,6 @@ export default function ContactsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-150">
-      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -174,7 +172,6 @@ export default function ContactsPage() {
         </button>
       </div>
 
-      {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
         <input
@@ -194,7 +191,6 @@ export default function ContactsPage() {
         )}
       </div>
 
-      {/* Content Area */}
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3 text-zinc-500">
           <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
@@ -235,7 +231,6 @@ export default function ContactsPage() {
                 className="group relative rounded-xl border border-zinc-800/90 bg-zinc-900/70 hover:border-zinc-700 hover:bg-zinc-850/80 transition p-4 flex flex-col justify-between"
               >
                 <div>
-                  {/* Top Row: Initials Badge & Name */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700 flex items-center justify-center font-display text-xs font-bold text-white flex-shrink-0">
@@ -253,7 +248,6 @@ export default function ContactsPage() {
                       </div>
                     </div>
 
-                    {/* Action buttons (Edit & Delete) */}
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
                       <button
                         type="button"
@@ -274,7 +268,6 @@ export default function ContactsPage() {
                     </div>
                   </div>
 
-                  {/* Address Display */}
                   <div className="mt-3 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-zinc-950/70 border border-zinc-800/90 font-mono text-[11px]">
                     <span className="text-zinc-400 truncate">{shortAddr}</span>
                     <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
@@ -303,7 +296,6 @@ export default function ContactsPage() {
                   </div>
                 </div>
 
-                {/* Bottom Send Payment Button */}
                 <div className="mt-4 pt-3 border-t border-zinc-800/70">
                   <button
                     type="button"
@@ -320,7 +312,6 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {/* Add / Edit Contact Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-100">
           <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl relative">

@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 export default function BrandLogo({
-  size = "md", // "sm" | "md" | "lg"
+  size = "md",
   showWordmark = true,
   showBadge = true,
   badgeText = "Amoy",

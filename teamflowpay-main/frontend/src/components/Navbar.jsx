@@ -56,11 +56,9 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo & Brand */}
           <div className="flex items-center gap-6">
             <BrandLogo size="md" to="/dashboard" />
 
-            {/* Main Navigation Links */}
             {isAuthenticated && (
               <nav className="hidden md:flex items-center gap-1">
                 {navLinks.map((link) => {
@@ -85,12 +83,9 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Right Area: Price Ticker, Network Indicator & Profile */}
           <div className="flex items-center gap-3">
-            {/* Live Crypto / FX Price Ticker */}
             <PriceTicker />
 
-            {/* Polygon Amoy Badge */}
             <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="font-mono text-[11px] text-zinc-300">Polygon Amoy</span>
@@ -118,7 +113,6 @@ export default function Navbar() {
                   <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
                 </button>
 
-                {/* Dropdown Menu */}
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-56 rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl py-1 text-xs z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="px-3.5 py-2.5 border-b border-zinc-800">
@@ -177,7 +171,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation Row */}
         {isAuthenticated && (
           <div className="md:hidden flex items-center justify-around border-t border-zinc-850 py-2">
             {navLinks.map((link) => {

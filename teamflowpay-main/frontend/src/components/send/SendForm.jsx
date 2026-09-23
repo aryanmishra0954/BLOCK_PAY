@@ -29,7 +29,6 @@ export default function SendForm({
   const [searchParams] = useSearchParams();
   const { rates } = usePrices();
 
-  // Mode: "instant" (Internal DB Ledger) | "on_chain" (Real MetaMask Polygon Amoy)
   const [transferMode, setTransferMode] = useState("instant");
 
   const [recipient, setRecipient] = useState(searchParams.get("to") || "");
@@ -41,7 +40,6 @@ export default function SendForm({
   const [submitStep, setSubmitStep] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Address Book picker state
   const [contacts, setContacts] = useState([]);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [saveToContacts, setSaveToContacts] = useState(false);
@@ -50,14 +48,12 @@ export default function SendForm({
   const currentGasFee = 0.0023;
   const hasMetaMask = typeof window !== "undefined" && Boolean(window.ethereum);
 
-  // Load contacts
   useEffect(() => {
     async function loadContacts() {
       try {
         const res = await BlockPayAPI.contacts.getAll();
         if (res.success && Array.isArray(res.contacts)) {
           setContacts(res.contacts);
-          // If query param didn't specify name but address matches a contact, resolve name
           if (!recipientName && recipient) {
             const found = res.contacts.find(
               (c) => c.address.toLowerCase() === recipient.toLowerCase()
@@ -72,7 +68,6 @@ export default function SendForm({
     loadContacts();
   }, [recipient, recipientName]);
 
-  // Convert entered amount to POL dynamically using live rates
   const numAmount = parseFloat(amount) || 0;
   let polEquivalent = numAmount;
   if (currency !== "POL") {
@@ -80,7 +75,6 @@ export default function SendForm({
     polEquivalent = rate > 0 ? numAmount / rate : numAmount;
   }
 
-  // Notify parent of updates for summary card
   useEffect(() => {
     if (onRecipientChange) onRecipientChange(recipient);
   }, [recipient, onRecipientChange]);
@@ -95,7 +89,6 @@ export default function SendForm({
       if (text) {
         const clean = text.trim();
         setRecipient(clean);
-        // Check if matches a known contact
         const found = contacts.find((c) => c.address.toLowerCase() === clean.toLowerCase());
         setRecipientName(found ? found.name : "");
       }
@@ -136,7 +129,6 @@ export default function SendForm({
       return;
     }
 
-    // In instant mode, check local balance
     if (transferMode === "instant" && polEquivalent + currentGasFee > balance) {
       setErrorMsg(
         `Insufficient balance. You require ${(polEquivalent + currentGasFee).toFixed(
@@ -146,7 +138,6 @@ export default function SendForm({
       return;
     }
 
-    // In on-chain mode, verify metamask is available
     if (transferMode === "on_chain" && !hasMetaMask) {
       setErrorMsg("MetaMask was not detected. Please install MetaMask to broadcast real on-chain transactions, or select Instant Ledger mode.");
       return;
@@ -160,7 +151,6 @@ export default function SendForm({
     );
 
     try {
-      // If user checked "Save to contacts"
       if (saveToContacts && newContactName.trim()) {
         try {
           await BlockPayAPI.contacts.create({
@@ -206,7 +196,6 @@ export default function SendForm({
           </div>
         )}
 
-        {/* Transfer Mode Selector Tabs */}
         <div>
           <label className="block text-xs font-semibold text-zinc-300 mb-1.5 font-sans">
             Transfer Mode
@@ -238,7 +227,6 @@ export default function SendForm({
             </button>
           </div>
 
-          {/* Mode Explainer Notice */}
           {transferMode === "on_chain" ? (
             <div className="mt-2.5 p-3 rounded-xl bg-purple-950/25 border border-purple-800/40 text-xs text-purple-300 flex items-start gap-2.5 animate-in fade-in duration-100">
               <Globe className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
@@ -262,7 +250,6 @@ export default function SendForm({
           )}
         </div>
 
-        {/* Recipient Input with Address Book Quick-Select */}
         <div>
           <div className="flex items-center justify-between mb-1.5 text-xs font-semibold text-zinc-300 font-sans">
             <label className="flex items-center gap-2">
@@ -275,7 +262,6 @@ export default function SendForm({
               )}
             </label>
 
-            {/* Address Book Trigger */}
             <div className="flex items-center gap-2">
               {contacts.length > 0 && (
                 <button
@@ -291,7 +277,6 @@ export default function SendForm({
             </div>
           </div>
 
-          {/* Quick Contact Picker Drawer */}
           {isPickerOpen && (
             <div className="mb-2.5 p-2 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1 max-h-48 overflow-y-auto animate-in fade-in duration-100">
               <div className="text-[10px] uppercase font-mono font-semibold text-zinc-500 px-2 py-1">
@@ -345,7 +330,6 @@ export default function SendForm({
             </button>
           </div>
 
-          {/* Optional: Save to contacts toggle if not already a contact */}
           {recipient.startsWith("0x") && recipient.length === 42 && !isExistingContact && (
             <div className="mt-2 p-2.5 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
               <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
@@ -373,7 +357,6 @@ export default function SendForm({
           )}
         </div>
 
-        {/* Amount & Currency Selection with Live FX Conversion */}
         <div>
           <div className="flex items-center justify-between mb-1.5 text-xs font-semibold text-zinc-300 font-sans">
             <label>Amount to Send</label>
@@ -424,7 +407,6 @@ export default function SendForm({
             </select>
           </div>
 
-          {/* Live Conversion Subtitle */}
           {currency !== "POL" && numAmount > 0 && (
             <p className="text-[11px] text-zinc-400 mt-1.5 font-mono flex items-center justify-between">
               <span>
@@ -437,7 +419,6 @@ export default function SendForm({
           )}
         </div>
 
-        {/* Note / Memo */}
         <div>
           <label className="block text-xs font-semibold text-zinc-300 mb-1.5 font-sans">
             Reference / Memo (Optional)
@@ -451,7 +432,6 @@ export default function SendForm({
           />
         </div>
 
-        {/* Network & Gas Estimate Banner */}
         <div className="p-3 rounded-xl bg-[#0c0d10] border border-[#1f242d] flex items-center justify-between text-xs font-mono">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -462,7 +442,6 @@ export default function SendForm({
           <span className="text-zinc-300 font-semibold">{currentGasFee} POL</span>
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}

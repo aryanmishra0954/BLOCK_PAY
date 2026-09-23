@@ -14,7 +14,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState("signin"); // "signin" | "signup"
+  const [authMode, setAuthMode] = useState("signin");
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -36,7 +36,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0b0d] text-zinc-100 relative selection:bg-emerald-500/20 selection:text-emerald-400">
-      {/* Ambient Flow Background Asset */}
       <div className="ambient-flow-container" aria-hidden="true">
         <div className="ambient-grid"></div>
         <img
@@ -48,11 +47,9 @@ export default function LandingPage() {
         <div className="ambient-flow-overlay"></div>
       </div>
 
-      {/* Navigation Header */}
       <header className="sticky top-0 z-40 glass-surface border-b border-[#1f232b]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Brand Logo with F Monogram */}
             <div className="flex items-center gap-8">
               <BrandLogo size="md" to="/" />
 
@@ -72,7 +69,6 @@ export default function LandingPage() {
               </nav>
             </div>
 
-            {/* Header Actions */}
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md border border-[#232731] text-xs font-medium text-zinc-400 bg-[#12151b]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -109,7 +105,6 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Main Sections */}
       <main className="relative z-10">
         <HeroSection
           onGetStarted={handleGetStarted}
@@ -123,7 +118,6 @@ export default function LandingPage() {
         />
       </main>
 
-      {/* Modular Auth Modal */}
       <AuthModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -1,12 +1,8 @@
-/**
- * BlockPay React API Client
- * Connects directly to Flask backend endpoints.
- */
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
-    ? "" // Uses Vite proxy
+    ? ""
     : "https://BlockPay-backend.vercel.app");
 
 export const BlockPayAPI = {

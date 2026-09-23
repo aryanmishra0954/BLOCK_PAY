@@ -24,7 +24,6 @@ export default function SendPage() {
     if (txData.mode === "on_chain") {
       txResult = await sendOnChainTransaction(txData);
     } else {
-      // Add small synthetic confirmation wait
       await new Promise((r) => setTimeout(r, 600));
       txResult = await sendTransaction(txData);
     }
@@ -34,7 +33,6 @@ export default function SendPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
-      {/* Back Button & Title */}
       <div className="flex items-center gap-3">
         <Link
           to="/dashboard"
@@ -53,7 +51,6 @@ export default function SendPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main Form (2 Cols) */}
         <div className="lg:col-span-2">
           <SendForm
             balance={balance}
@@ -64,7 +61,6 @@ export default function SendPage() {
           />
         </div>
 
-        {/* Sidebar Info (1 Col) */}
         <div>
           <SendSummaryCard
             walletAddress={walletAddress}
@@ -74,7 +70,6 @@ export default function SendPage() {
         </div>
       </div>
 
-      {/* Success Modal */}
       <TxSuccessModal
         successData={successData}
         onClose={() => setSuccessData(null)}

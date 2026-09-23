@@ -17,19 +17,18 @@ import {
 
 export default function AuthModal({ isOpen, onClose, initialMode = "signin", onSuccess }) {
   const { login, register, loginWithWeb3, loginWithWeb3Auth, loginWithGoogle } = useAuth();
-  const [authMode, setAuthMode] = useState(initialMode); // "signin" | "signup"
+  const [authMode, setAuthMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeProvider, setActiveProvider] = useState(null); // "email" | "metamask" | "web3auth"
+  const [activeProvider, setActiveProvider] = useState(null);
 
   const [showGooglePrompt, setShowGooglePrompt] = useState(false);
   const [googleEmailInput, setGoogleEmailInput] = useState("");
 
-  // MetaMask detection
   const [hasMetaMask, setHasMetaMask] = useState(false);
   const [showNoMetaMaskNotice, setShowNoMetaMaskNotice] = useState(false);
 
@@ -104,7 +103,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
       else onClose();
     } catch (err) {
       console.warn("Web3Auth handler fallback check:", err);
-      // If Web3Auth requires email or cloud initialization is unavailable:
       if (targetEmail && targetEmail.includes("@")) {
         try {
           await loginWithGoogle({
@@ -118,7 +116,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
           setErrorMsg(gErr.message || "Google sign-in failed. Please verify email.");
         }
       } else {
-        // Open the streamlined Google Account prompt instead of showing raw SDK error
         setGoogleEmailInput(email || "");
         setShowGooglePrompt(true);
       }
@@ -158,7 +155,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
       <div className="bg-[#101216] border border-[#232732] rounded-2xl max-w-md w-full p-6 sm:p-7 relative shadow-2xl overflow-hidden">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-zinc-500 hover:text-white transition p-1"
@@ -167,7 +163,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Brand & Header */}
         <div className="mb-5">
           <BrandLogo size="md" to={null} />
           <h3 className="font-display text-lg font-bold text-white mt-3">
@@ -178,7 +173,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
           </p>
         </div>
 
-        {/* Error Alert */}
         {errorMsg && (
           <div className="mb-4 p-3 rounded-xl bg-rose-950/30 border border-rose-800/60 text-rose-400 text-xs flex items-start gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -186,7 +180,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
           </div>
         )}
 
-        {/* No MetaMask Installed Notice */}
         {showNoMetaMaskNotice && (
           <div className="mb-4 p-3.5 rounded-xl bg-amber-950/30 border border-amber-800/50 text-amber-300 text-xs space-y-2 font-sans">
             <div className="flex items-center gap-1.5 font-semibold text-amber-200">
@@ -282,9 +275,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
           </form>
         ) : (
           <>
-            {/* Real Web3Auth & MetaMask Authentication Buttons */}
             <div className="space-y-2.5 mb-5 font-sans">
-              {/* Web3Auth: Google & Social Account Button */}
               <button
                 type="button"
                 onClick={handleWeb3AuthConnect}
@@ -292,7 +283,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 className="w-full p-3 rounded-xl border border-[#262b37] bg-[#14171d] hover:bg-[#1c212c] hover:border-emerald-500/40 text-white font-semibold text-xs flex items-center justify-between transition shadow-sm disabled:opacity-50 group"
               >
                 <div className="flex items-center gap-3">
-                  {/* Google SVG */}
                   <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0">
                       <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -316,7 +306,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 )}
               </button>
 
-              {/* MetaMask Web3 Button */}
               <button
                 type="button"
                 onClick={handleMetaMaskConnect}
@@ -324,7 +313,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 className="w-full p-3 rounded-xl border border-[#262b37] bg-[#14171d] hover:bg-[#1c212c] hover:border-amber-500/40 text-white font-semibold text-xs flex items-center justify-between transition shadow-sm disabled:opacity-50 group"
               >
                 <div className="flex items-center gap-3">
-                  {/* MetaMask Fox SVG */}
                   <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center">
                     <svg viewBox="0 0 32 32" className="w-4 h-4 flex-shrink-0" fill="none">
                       <path d="M28.4 4.5l-10 7.4 1.9-4.5L28.4 4.5z" fill="#E17726"/>
@@ -359,7 +347,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
               </button>
             </div>
 
-            {/* Divider */}
             <div className="relative flex items-center justify-center my-4">
               <div className="w-full border-t border-[#1e222b]"></div>
               <span className="bg-[#101216] px-3 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold font-sans">
@@ -367,7 +354,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
               </span>
             </div>
 
-            {/* Email & Password Form */}
             <form onSubmit={handleEmailSubmit} className="space-y-3.5 text-xs font-sans">
               {authMode === "signup" && (
                 <div>
@@ -450,7 +436,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
               </button>
             </form>
 
-            {/* Toggle Mode Footer */}
             <div className="mt-4 text-center text-xs text-zinc-400 border-t border-[#1f232c] pt-3.5 font-sans">
               {authMode === "signin" ? (
                 <p>

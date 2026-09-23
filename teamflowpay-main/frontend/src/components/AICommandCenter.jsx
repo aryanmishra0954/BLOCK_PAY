@@ -15,7 +15,7 @@ export default function AICommandCenter({ onCommandExecuted }) {
   const { walletAddress, sendTransaction } = useWallet();
   const [prompt, setPrompt] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0); // 0: idle, 1: intent, 2: groq, 3: schema, 4: committed
+  const [currentStep, setCurrentStep] = useState(0);
   const [receipt, setReceipt] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -36,11 +36,9 @@ export default function AICommandCenter({ onCommandExecuted }) {
     setCurrentStep(1);
 
     try {
-      // Step 1: Parsing
       await new Promise((r) => setTimeout(r, 400));
       setCurrentStep(2);
 
-      // Step 2: Call Flask Backend /api/agent/command
       const res = await BlockPayAPI.agent.sendCommand(trimmed);
 
       setCurrentStep(3);
@@ -52,7 +50,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
 
       setCurrentStep(4);
 
-      // Check if command is payment transfer
       if (res.action === "create_payment") {
         const params = res.command?.parameters || res.command?.data || {};
         const amount = params.amount || 50;
@@ -91,7 +88,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
 
   return (
     <section className="card-base p-6 sm:p-8 bg-[#101216] border border-[#20242c] shadow-sm relative overflow-hidden">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#20242c]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-[#161920] border border-[#262b36] text-zinc-200 flex items-center justify-center text-sm font-bold shadow-sm">
@@ -117,7 +113,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
         </div>
       </div>
 
-      {/* Suggestion Chips */}
       <div className="py-4">
         <div className="flex flex-wrap gap-2">
           {examplePrompts.map((example, idx) => (
@@ -133,7 +128,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
         </div>
       </div>
 
-      {/* Input Box */}
       <div className="relative mt-1">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <div className="relative flex-1">
@@ -171,7 +165,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
         </div>
       </div>
 
-      {/* Progress Dots */}
       {currentStep > 0 && (
         <div className="mt-4 py-2.5 px-3.5 rounded-lg border border-[#20242c] bg-[#0c0d10] font-sans text-xs flex flex-wrap items-center gap-3 text-zinc-400">
           <span
@@ -215,7 +208,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
         </div>
       )}
 
-      {/* Receipt Output Card */}
       {receipt && (
         <div className="mt-5 rounded-xl border border-[#20242c] bg-[#12151b] p-5 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-start justify-between gap-3 mb-3 pb-3 border-b border-[#1b1f26]">
@@ -248,7 +240,6 @@ export default function AICommandCenter({ onCommandExecuted }) {
         </div>
       )}
 
-      {/* Error Message */}
       {errorMsg && (
         <div className="mt-4 p-3.5 rounded-lg border border-rose-500/30 bg-rose-950/20 text-xs text-rose-400 flex items-center justify-between">
           <span>{errorMsg}</span>

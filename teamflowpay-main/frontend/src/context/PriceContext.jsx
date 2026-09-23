@@ -23,7 +23,6 @@ export function PriceProvider({ children }) {
     }
   }, []);
 
-  // Refresh immediately on mount and every 60 seconds
   useEffect(() => {
     refreshPrices();
     const interval = setInterval(() => {
@@ -34,7 +33,6 @@ export function PriceProvider({ children }) {
 
   const pol = prices.pol || DEFAULT_PRICES.pol;
 
-  // Rate of 1 POL in each currency
   const rates = {
     POL: 1,
     USD: pol.usd,
@@ -42,9 +40,6 @@ export function PriceProvider({ children }) {
     INR: pol.inr,
   };
 
-  /**
-   * Convert an amount of POL into target fiat currency
-   */
   const convertPolToFiat = useCallback(
     (polAmount, currency = "USD") => {
       const num = parseFloat(polAmount) || 0;
@@ -54,9 +49,6 @@ export function PriceProvider({ children }) {
     [rates]
   );
 
-  /**
-   * Convert an amount of fiat into POL equivalent
-   */
   const convertFiatToPol = useCallback(
     (fiatAmount, currency = "USD") => {
       const num = parseFloat(fiatAmount) || 0;

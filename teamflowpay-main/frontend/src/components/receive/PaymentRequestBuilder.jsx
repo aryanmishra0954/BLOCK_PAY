@@ -61,7 +61,6 @@ export default function PaymentRequestBuilder({ walletAddress }) {
           </div>
         </div>
 
-        {/* Generated Direct URL */}
         <div>
           <label className="block text-xs font-semibold text-zinc-300 mb-1.5 font-sans">
             Shareable Payment Link
@@ -88,7 +87,6 @@ export default function PaymentRequestBuilder({ walletAddress }) {
           </div>
         </div>
 
-        {/* Social Share Dispatch */}
         <div className="pt-2">
           <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2 font-sans">
             Share Payment Link

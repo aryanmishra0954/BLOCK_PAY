@@ -28,7 +28,6 @@ from data.db import (
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
-
 def _sanitize_user(user: dict) -> dict:
     """Return a safe user dict without password hash."""
     if not user:
@@ -45,13 +44,11 @@ def _sanitize_user(user: dict) -> dict:
         "last_login": user.get("last_login"),
     }
 
-
 def _get_token_from_request():
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         return auth_header[7:].strip()
     return request.args.get("token") or request.headers.get("X-Auth-Token")
-
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
@@ -69,12 +66,10 @@ def register():
     if not full_name:
         full_name = email.split("@")[0].capitalize()
 
-    # Check if user already exists
     existing = get_user_by_email(email)
     if existing:
         return jsonify({"success": False, "error": "An account with this email already exists. Please sign in."}), 409
 
-    # Generate an EVM wallet address if not provided
     if not wallet_address or not wallet_address.startswith("0x"):
         wallet_address = "0x" + secrets.token_hex(20)
 
@@ -98,7 +93,6 @@ def register():
         "user": _sanitize_user(user),
     }), 201
 
-
 @auth_bp.route("/login", methods=["POST"])
 def login():
     """Authenticate user with email and password."""
@@ -114,7 +108,6 @@ def login():
         return jsonify({"success": False, "error": "Invalid email or password."}), 401
 
     if user.get("password_hash") == "GOOGLE_OAUTH_AUTHENTICATED":
-        # Google OAuth user establishing their password on email login
         new_hash = generate_password_hash(password)
         update_user_password(user["id"], new_hash)
         user["password_hash"] = new_hash
@@ -130,7 +123,6 @@ def login():
         "token": token,
         "user": _sanitize_user(user),
     }), 200
-
 
 @auth_bp.route("/me", methods=["GET"])
 def get_current_user():
@@ -148,7 +140,6 @@ def get_current_user():
         "user": _sanitize_user(user),
     }), 200
 
-
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     """Invalidate current session."""
@@ -158,11 +149,6 @@ def logout():
         if user:
             update_user_token(user["id"], None)
     return jsonify({"success": True, "message": "Successfully logged out."}), 200
-
-
-# ------------------------------------------------------------------ #
-# Web3 / MetaMask Cryptographic Signature Auth
-# ------------------------------------------------------------------ #
 
 @auth_bp.route("/web3/nonce", methods=["GET"])
 def get_nonce():
@@ -190,7 +176,6 @@ def get_nonce():
         "message": message,
     }), 200
 
-
 @auth_bp.route("/web3/verify", methods=["POST"])
 def verify_web3():
     """Verify cryptographic signature from MetaMask / Web3 wallet."""
@@ -202,7 +187,6 @@ def verify_web3():
     if not address or not signature or not message:
         return jsonify({"success": False, "error": "Address, signature, and message are required."}), 400
 
-    # Verify nonce presence to prevent replay
     expected_nonce = get_web3_nonce(address)
     if not expected_nonce or expected_nonce not in message:
         return jsonify({
@@ -210,7 +194,6 @@ def verify_web3():
             "error": "Invalid or expired challenge nonce. Please request a new signature."
         }), 400
 
-    # Cryptographically verify the EIP-191 signature
     try:
         signable_message = encode_defunct(text=message)
         recovered_address = Account.recover_message(signable_message, signature=signature)
@@ -222,10 +205,8 @@ def verify_web3():
     except Exception as err:
         return jsonify({"success": False, "error": f"Cryptographic verification error: {str(err)}"}), 400
 
-    # Consume nonce after successful verification
     delete_web3_nonce(address)
 
-    # Find existing user or onboard new Web3 user
     user = get_user_by_wallet(address)
     if not user:
         user = create_web3_user(wallet_address=address, initial_balance=10000.0)
@@ -240,11 +221,6 @@ def verify_web3():
         "token": token,
         "user": _sanitize_user(user),
     }), 200
-
-
-# ------------------------------------------------------------------ #
-# Google OAuth Sign-In
-# ------------------------------------------------------------------ #
 
 @auth_bp.route("/google/verify", methods=["POST"])
 def verify_google():

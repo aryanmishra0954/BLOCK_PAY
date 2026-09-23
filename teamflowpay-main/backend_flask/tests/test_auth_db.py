@@ -11,7 +11,6 @@ def test_auth():
     client = app.test_client()
     test_email = f"user_{uuid.uuid4().hex[:8]}@blockpay.io"
 
-    # 1. Test registration
     print("Testing /api/auth/register...")
     res = client.post("/api/auth/register", json={
         "email": test_email,
@@ -22,7 +21,6 @@ def test_auth():
     assert res.status_code == 201
     token = res.get_json()["token"]
 
-    # 2. Test duplicate registration prevention
     print("Testing duplicate registration...")
     res_dup = client.post("/api/auth/register", json={
         "email": test_email,
@@ -32,7 +30,6 @@ def test_auth():
     print(f"Duplicate status: {res_dup.status_code}, data: {res_dup.get_json()}")
     assert res_dup.status_code == 409
 
-    # 3. Test login with wrong password
     print("Testing login with wrong password...")
     res_wrong = client.post("/api/auth/login", json={
         "email": test_email,
@@ -41,7 +38,6 @@ def test_auth():
     print(f"Wrong pass status: {res_wrong.status_code}, data: {res_wrong.get_json()}")
     assert res_wrong.status_code == 401
 
-    # 4. Test login with correct password
     print("Testing login with correct password...")
     res_login = client.post("/api/auth/login", json={
         "email": test_email,
@@ -52,13 +48,11 @@ def test_auth():
 
     active_token = res_login.get_json()["token"]
 
-    # 5. Test /api/auth/me
     print("Testing /api/auth/me...")
     res_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {active_token}"})
     print(f"Me status: {res_me.status_code}, data: {res_me.get_json()}")
     assert res_me.status_code == 200
 
-    # 6. Test recording a transaction
     print("Testing /api/transactions...")
     res_tx = client.post("/api/transactions", json={
         "type": "sent",
@@ -71,7 +65,6 @@ def test_auth():
     print(f"Transaction status: {res_tx.status_code}, data: {res_tx.get_json()}")
     assert res_tx.status_code == 201
 
-    # 7. Test fetching transactions
     res_list = client.get("/api/transactions", headers={"Authorization": f"Bearer {active_token}"})
     print(f"List status: {res_list.status_code}, count: {len(res_list.get_json()['transactions'])}, balance: {res_list.get_json()['balance']}")
     assert len(res_list.get_json()["transactions"]) >= 1

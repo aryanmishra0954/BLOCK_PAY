@@ -10,12 +10,6 @@ from services.command_executor import validate_command, execute_command, Command
 
 agent_bp = Blueprint("agent", __name__, url_prefix="/api/agent")
 
-
-# ------------------------------------------------------------------ #
-#  POST /api/agent/command                                            #
-#  Natural-language prompt  →  AI  →  validate  →  execute            #
-# ------------------------------------------------------------------ #
-
 @agent_bp.route("/command", methods=["POST"])
 def command():
     try:
@@ -30,11 +24,9 @@ def command():
 
         print(f'[CMD] Received prompt: "{prompt}"')
 
-        # Step 1 — AI generates a structured command
         ai_command = ai_service.generate_command(prompt)
         print(f"[AI] Generated command: {ai_command}")
 
-        # Step 2 — Validate
         validation = validate_command(ai_command)
         if not validation["valid"]:
             return jsonify({
@@ -44,7 +36,6 @@ def command():
                 "command": ai_command,
             }), 400
 
-        # Step 3 — Execute
         result = execute_command(ai_command)
 
         return jsonify({
@@ -62,12 +53,6 @@ def command():
             "error": str(exc) or "Command processing failed",
             "prompt": (request.get_json(silent=True) or {}).get("prompt"),
         }), 500
-
-
-# ------------------------------------------------------------------ #
-#  POST /api/agent/execute                                            #
-#  Pre-formed JSON command  →  validate  →  execute                   #
-# ------------------------------------------------------------------ #
 
 @agent_bp.route("/execute", methods=["POST"])
 def execute():
@@ -104,12 +89,6 @@ def execute():
             "error": str(exc) or "Command execution failed",
             "action": (request.get_json(silent=True) or {}).get("action"),
         }), 500
-
-
-# ------------------------------------------------------------------ #
-#  GET /api/agent/actions                                             #
-#  List available actions                                             #
-# ------------------------------------------------------------------ #
 
 @agent_bp.route("/actions", methods=["GET"])
 def actions():

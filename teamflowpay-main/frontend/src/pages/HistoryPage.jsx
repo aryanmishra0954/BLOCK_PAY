@@ -12,7 +12,6 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Filter states
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
@@ -52,7 +51,6 @@ export default function HistoryPage() {
     setCurrentPage(1);
   };
 
-  // Filter logic
   const filtered = allTransactions.filter((tx) => {
     if (typeFilter !== "all" && tx.type !== typeFilter) return false;
     if (statusFilter !== "all" && tx.status !== statusFilter) return false;
@@ -77,7 +75,6 @@ export default function HistoryPage() {
     return true;
   });
 
-  // Summary Metrics calculations
   const totalEntries = allTransactions.length;
   const grossOutflow = allTransactions
     .filter((t) => t.type === "sent")
@@ -89,7 +86,6 @@ export default function HistoryPage() {
     allTransactions.filter((t) => t.type === "sent").length * 0.0021
   ).toFixed(4);
 
-  // Pagination
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const pageTransactions = filtered.slice(startIndex, startIndex + itemsPerPage);
@@ -112,7 +108,6 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
-      {/* Title & Sync Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
@@ -150,7 +145,6 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Metrics Row */}
       <LedgerMetrics
         totalEntries={totalEntries}
         grossOutflow={grossOutflow}
@@ -158,7 +152,6 @@ export default function HistoryPage() {
         gasConsumed={gasConsumed}
       />
 
-      {/* Filters Strip */}
       <LedgerFilters
         typeFilter={typeFilter}
         setTypeFilter={setTypeFilter}
@@ -171,7 +164,6 @@ export default function HistoryPage() {
         onReset={handleResetFilters}
       />
 
-      {/* Ledger Table */}
       <LedgerTable
         transactions={pageTransactions}
         filteredCount={filtered.length}

@@ -26,7 +26,6 @@ export default function BalanceCard({
 
   return (
     <div className="relative rounded-2xl border border-[#20242c] bg-[#101216] p-6 sm:p-8 shadow-sm overflow-hidden">
-      {/* Top Identity & Action Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1b1f26]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#161920] border border-[#262b36] flex items-center justify-center text-zinc-300 font-mono text-xs font-semibold">
@@ -64,7 +63,6 @@ export default function BalanceCard({
         </div>
       </div>
 
-      {/* Balance Figures Row */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pt-6">
         <div>
           <p className="text-[11px] uppercase tracking-wider font-semibold text-zinc-400 mb-1 font-sans">
@@ -93,7 +91,6 @@ export default function BalanceCard({
           </div>
         </div>
 
-        {/* Quick Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
             to="/send"

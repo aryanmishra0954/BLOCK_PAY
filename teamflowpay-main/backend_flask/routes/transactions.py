@@ -14,13 +14,11 @@ from data.db import (
 
 transactions_bp = Blueprint("transactions", __name__, url_prefix="/api/transactions")
 
-
 def _get_token_from_request():
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         return auth_header[7:].strip()
     return request.args.get("token") or request.headers.get("X-Auth-Token")
-
 
 @transactions_bp.route("", methods=["GET"])
 @transactions_bp.route("/", methods=["GET"])
@@ -29,7 +27,6 @@ def get_transactions():
     token = _get_token_from_request()
     user = get_user_by_token(token) if token else None
 
-    # Fallback to email / wallet address param for flexibility
     if not user:
         email = request.args.get("email")
         if email:
@@ -46,7 +43,6 @@ def get_transactions():
         "balance": float(user["balance"]),
         "transactions": txs,
     }), 200
-
 
 @transactions_bp.route("", methods=["POST"])
 @transactions_bp.route("/", methods=["POST"])

@@ -17,13 +17,11 @@ from data.db import (
 
 contacts_bp = Blueprint("contacts", __name__, url_prefix="/api/contacts")
 
-
 def _get_token_from_request():
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         return auth_header[7:].strip()
     return request.args.get("token") or request.headers.get("X-Auth-Token")
-
 
 def _resolve_user():
     token = _get_token_from_request()
@@ -35,12 +33,10 @@ def _resolve_user():
             user = get_user_by_email(email)
     return user
 
-
 def _is_valid_eth_address(address: str) -> bool:
     if not address or not isinstance(address, str):
         return False
     return bool(re.match(r"^0x[0-9a-fA-F]{40}$", address.strip()))
-
 
 @contacts_bp.route("", methods=["GET"])
 @contacts_bp.route("/", methods=["GET"])
@@ -56,7 +52,6 @@ def list_contacts():
         "contacts": contacts,
         "count": len(contacts),
     }), 200
-
 
 @contacts_bp.route("", methods=["POST"])
 @contacts_bp.route("/", methods=["POST"])
@@ -92,7 +87,6 @@ def add_contact():
         "message": "Contact added successfully.",
         "contact": contact,
     }), 201
-
 
 @contacts_bp.route("/<contact_id>", methods=["PUT"])
 def edit_contact(contact_id):
@@ -132,7 +126,6 @@ def edit_contact(contact_id):
         "message": "Contact updated successfully.",
         "contact": updated,
     }), 200
-
 
 @contacts_bp.route("/<contact_id>", methods=["DELETE"])
 def remove_contact(contact_id):

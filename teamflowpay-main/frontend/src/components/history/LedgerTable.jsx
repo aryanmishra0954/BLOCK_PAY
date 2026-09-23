@@ -156,7 +156,6 @@ export default function LedgerTable({
         </table>
       </div>
 
-      {/* Pagination Footer */}
       {totalPages > 1 && (
         <div className="p-4 bg-[#0c0d10] border-t border-[#1b1f26] flex items-center justify-between text-xs text-zinc-400 font-sans">
           <span>

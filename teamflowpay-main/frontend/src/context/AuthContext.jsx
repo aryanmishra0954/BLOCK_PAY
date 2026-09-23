@@ -8,12 +8,10 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("authToken") || "");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sync user state on load if token exists
   useEffect(() => {
     async function initAuth() {
       const storedToken = localStorage.getItem("authToken");
       if (!storedToken) {
-        // Ensure default active session so dashboard always loads immediately
         setUser({
           id: "active-session",
           email: localStorage.getItem("userEmail") || "trader@BlockPay.io",
@@ -37,12 +35,10 @@ export function AuthProvider({ children }) {
             localStorage.setItem("walletBalance", parseFloat(res.user.balance).toFixed(4));
           }
         } else {
-          // Token invalid or expired
           handleLogoutLocal();
         }
       } catch (err) {
         console.warn("Auth initialization notice:", err);
-        // If offline/server down but cached credentials exist, preserve session
         const cachedEmail = localStorage.getItem("userEmail");
         if (cachedEmail) {
           setUser({
@@ -101,7 +97,6 @@ export function AuthProvider({ children }) {
       );
     }
 
-    // 1. Request account access from MetaMask
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
@@ -112,7 +107,6 @@ export function AuthProvider({ children }) {
 
     const address = accounts[0];
 
-    // 2. Request challenge nonce from backend
     const nonceRes = await BlockPayAPI.auth.getWeb3Nonce(address);
     if (!nonceRes || !nonceRes.message) {
       throw new Error("Failed to generate challenge nonce from BlockPay server.");
@@ -120,7 +114,6 @@ export function AuthProvider({ children }) {
 
     const challengeMessage = nonceRes.message;
 
-    // 3. Request cryptographic signature from user via MetaMask personal_sign
     let signature;
     try {
       signature = await window.ethereum.request({
@@ -134,7 +127,6 @@ export function AuthProvider({ children }) {
       throw new Error(err.message || "Failed to sign message with MetaMask.");
     }
 
-    // 4. Send signature to backend for cryptographic verification
     const verifyRes = await BlockPayAPI.auth.verifyWeb3({
       address,
       signature,
@@ -179,8 +171,6 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.warn("Web3Auth Cloud SDK notice:", err?.message || err);
-      // If Web3Auth fails (e.g. project configuration not fetched, localhost origin blocked, popup cancelled)
-      // and we don't have an email yet, request the user to enter their Google account
       if (!email) {
         throw new Error("NEED_GOOGLE_EMAIL");
       }

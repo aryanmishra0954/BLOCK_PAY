@@ -20,7 +20,6 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
-      {/* Title */}
       <div className="flex items-center gap-3">
         <Link
           to="/dashboard"

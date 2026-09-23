@@ -1,10 +1,9 @@
 import { Web3Auth } from "@web3auth/modal";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 
-// Polygon Amoy Testnet Chain Configuration
 export const POLYGON_AMOY_CHAIN_CONFIG = {
   chainNamespace: "eip155",
-  chainId: "0x13882", // 80002 hex
+  chainId: "0x13882",
   rpcTarget: "https://rpc-amoy.polygon.technology",
   displayName: "Polygon Amoy Testnet",
   blockExplorerUrl: "https://amoy.polygonscan.com/",
@@ -13,7 +12,6 @@ export const POLYGON_AMOY_CHAIN_CONFIG = {
   decimals: 18,
 };
 
-// Public Sapphire Devnet Client ID (Whitelisted for localhost & dev environments)
 const DEFAULT_CLIENT_ID =
   "BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXBI0e-Oe_u6X3oVAbCiAZOTEBtTXw4tsluTITPqA8Kc-0G6E4VwyIc";
 
@@ -71,9 +69,6 @@ class Web3AuthService {
     return this.initPromise;
   }
 
-  /**
-   * Connect via Web3Auth Modal (Google, Email OTP, Web3 Wallets)
-   */
   async connect() {
     await this.init();
     if (this.web3auth.connected && this.web3auth.provider) {
@@ -93,9 +88,6 @@ class Web3AuthService {
     };
   }
 
-  /**
-   * Sign out of Web3Auth
-   */
   async logout() {
     try {
       if (this.web3auth && this.web3auth.connected) {
@@ -108,9 +100,6 @@ class Web3AuthService {
     }
   }
 
-  /**
-   * Get current active account address if connected
-   */
   async getAccount() {
     if (!this.provider) return null;
     try {

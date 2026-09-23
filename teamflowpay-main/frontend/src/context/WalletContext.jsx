@@ -110,9 +110,6 @@ export function WalletProvider({ children }) {
     };
   };
 
-  /**
-   * Broadcast an authentic on-chain transfer to Polygon Amoy Testnet via MetaMask.
-   */
   const sendOnChainTransaction = async ({ to, amount, note = "" }) => {
     if (typeof window === "undefined" || !window.ethereum) {
       throw new Error(
@@ -120,9 +117,8 @@ export function WalletProvider({ children }) {
       );
     }
 
-    const AMOY_CHAIN_ID_HEX = "0x13882"; // 80002 decimal
+    const AMOY_CHAIN_ID_HEX = "0x13882";
 
-    // 1. Ensure connected to Polygon Amoy Testnet
     try {
       const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
       if (currentChainId !== AMOY_CHAIN_ID_HEX) {
@@ -132,7 +128,6 @@ export function WalletProvider({ children }) {
             params: [{ chainId: AMOY_CHAIN_ID_HEX }],
           });
         } catch (switchError) {
-          // Chain not added to user's wallet yet
           if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
             await window.ethereum.request({
               method: "wallet_addEthereumChain",
@@ -159,26 +154,22 @@ export function WalletProvider({ children }) {
       throw new Error(`Failed to switch network to Polygon Amoy: ${err.message}`);
     }
 
-    // 2. Request user account
     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
     if (!accounts || accounts.length === 0) {
       throw new Error("No active account selected in your Web3 wallet.");
     }
     const fromAddress = accounts[0];
 
-    // 3. Convert POL amount to 18-decimal Wei Hex
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       throw new Error("Amount must be greater than 0 POL.");
     }
 
-    // High-precision BigInt wei conversion
     const [wholePart, decimalPart = ""] = amount.toString().split(".");
     const paddedDecimals = decimalPart.padEnd(18, "0").slice(0, 18);
     const weiAmount = BigInt(wholePart || "0") * 10n ** 18n + BigInt(paddedDecimals);
     const valueHex = "0x" + weiAmount.toString(16);
 
-    // 4. Prompt MetaMask to sign and broadcast the real on-chain transaction
     let realTxHash;
     try {
       realTxHash = await window.ethereum.request({
@@ -198,7 +189,6 @@ export function WalletProvider({ children }) {
       throw new Error(`MetaMask broadcast error: ${txErr.message || "Unknown error"}`);
     }
 
-    // 5. Update local balance and sync to backend
     const newBal = Math.max(0, balance - numAmount);
     setBalance(newBal);
     localStorage.setItem("walletBalance", newBal.toFixed(4));

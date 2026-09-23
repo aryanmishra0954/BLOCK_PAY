@@ -23,7 +23,6 @@ export default function TxSuccessModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
       <div className="bg-[#101216] border border-[#20242c] rounded-2xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden">
-        {/* Top Glow */}
         <div
           className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
             isOnChain ? "from-purple-500 via-emerald-500 to-purple-500" : "from-emerald-500 to-emerald-400"
@@ -58,7 +57,6 @@ export default function TxSuccessModal({
           )}
         </div>
 
-        {/* Details Box */}
         <div className="bg-[#0c0d10] rounded-xl p-4 mb-6 border border-[#20242c] text-xs font-mono space-y-2.5 text-left">
           <div className="flex justify-between items-center">
             <span className="text-zinc-500 font-sans">Amount Sent:</span>
@@ -102,7 +100,6 @@ export default function TxSuccessModal({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="space-y-2 font-sans">
           <a
             href={`https://amoy.polygonscan.com/tx/${successData.hash}`}

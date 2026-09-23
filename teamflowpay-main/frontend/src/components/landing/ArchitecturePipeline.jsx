@@ -71,7 +71,6 @@ export default function ArchitecturePipeline({ onGetStarted, isAuthenticated }) 
           })}
         </div>
 
-        {/* CTA Banner */}
         <div className="mt-16 p-8 sm:p-10 rounded-2xl bg-gradient-to-r from-[#12151b] via-[#151921] to-[#12151b] border border-[#242935] text-center max-w-4xl mx-auto">
           <h4 className="font-display text-2xl sm:text-3xl font-bold text-white mb-3">
             Ready to start sending payments?

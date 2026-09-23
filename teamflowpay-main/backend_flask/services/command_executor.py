@@ -12,22 +12,12 @@ from datetime import datetime, timedelta
 
 from data.database import db
 
-
-# ------------------------------------------------------------------ #
-#  Custom Error                                                       #
-# ------------------------------------------------------------------ #
-
 class CommandError(Exception):
     """An error that carries an HTTP status code."""
 
     def __init__(self, message: str, status_code: int = 500):
         super().__init__(message)
         self.status_code = status_code
-
-
-# ------------------------------------------------------------------ #
-#  Validation                                                         #
-# ------------------------------------------------------------------ #
 
 VALID_ACTIONS = [
     "create_payment",
@@ -37,7 +27,6 @@ VALID_ACTIONS = [
     "add_client",
     "check_balance_reminders",
 ]
-
 
 def normalize_command(command: dict) -> dict:
     """Normalize fields like parameters -> data and recipient -> vendor."""
@@ -52,7 +41,6 @@ def normalize_command(command: dict) -> dict:
         if "dueDate" in data and "due_date" not in data:
             data["due_date"] = data["dueDate"]
     return command
-
 
 def validate_command(command: dict) -> dict:
     """Return ``{"valid": True/False, "errors": [...]}``."""
@@ -74,7 +62,6 @@ def validate_command(command: dict) -> dict:
             f"Invalid action: {action}. Valid actions: {', '.join(VALID_ACTIONS)}"
         )
 
-    # Action-specific validation
     data = command.get("data")
 
     if action == "create_payment":
@@ -107,13 +94,7 @@ def validate_command(command: dict) -> dict:
 
     return {"valid": len(errors) == 0, "errors": errors}
 
-
-# ------------------------------------------------------------------ #
-#  Dispatcher                                                         #
-# ------------------------------------------------------------------ #
-
-_HANDLERS = {}  # populated after handler definitions below
-
+_HANDLERS = {}
 
 def execute_command(command: dict) -> dict:
     """Dispatch *command* to the matching handler and return its result."""
@@ -125,11 +106,6 @@ def execute_command(command: dict) -> dict:
         raise CommandError(f"Unknown action: {command['action']}", 400)
 
     return handler(command.get("data") or {})
-
-
-# ------------------------------------------------------------------ #
-#  Handlers                                                           #
-# ------------------------------------------------------------------ #
 
 def _handle_create_payment(data: dict) -> dict:
     payment = {
@@ -143,7 +119,6 @@ def _handle_create_payment(data: dict) -> dict:
         "created_at": datetime.utcnow().isoformat() + "Z",
     }
 
-    # Check if vendor exists
     vendor = db.get_client_by_name(data["vendor"])
     if not vendor:
         print(f"Vendor not found: {data['vendor']}. Creating payment anyway.")
@@ -160,14 +135,12 @@ def _handle_create_payment(data: dict) -> dict:
         "message": f"Payment created successfully for {payment['vendor']}",
     }
 
-
 def _handle_show_pending_payments(data: dict) -> dict:
     filter_type = data.get("filter", "all")
     vendor_filter = data.get("vendor")
 
     payments = [p for p in db.get_payments() if p["status"] == "pending"]
 
-    # Filter by vendor
     if vendor_filter:
         payments = [
             p
@@ -175,7 +148,6 @@ def _handle_show_pending_payments(data: dict) -> dict:
             if vendor_filter.lower() in p["vendor"].lower()
         ]
 
-    # Filter by time
     today = datetime.utcnow()
     if filter_type == "overdue":
         payments = [
@@ -210,7 +182,6 @@ def _handle_show_pending_payments(data: dict) -> dict:
         "filter": filter_type,
     }
 
-
 def _handle_export_report(data: dict) -> dict:
     period = data["period"]
     fmt = data.get("format", "csv")
@@ -218,7 +189,6 @@ def _handle_export_report(data: dict) -> dict:
     payments = db.get_payments()
     clients = db.get_clients()
 
-    # Filter by period (basic implementation)
     filtered = payments
     current_year = datetime.utcnow().year
 
@@ -243,7 +213,6 @@ def _handle_export_report(data: dict) -> dict:
         "message": f"Report exported successfully: {len(filtered)} records",
     }
 
-
 def _handle_set_reminder(data: dict) -> dict:
     reminder = {
         "id": str(uuid.uuid4()),
@@ -263,7 +232,6 @@ def _handle_set_reminder(data: dict) -> dict:
         "time": reminder["time"],
         "status": reminder["status"],
     }
-
 
 def _handle_add_client(data: dict) -> dict:
     existing = db.get_client_by_name(data["name"])
@@ -287,7 +255,6 @@ def _handle_add_client(data: dict) -> dict:
         "email": client["email"],
         "message": f"Client {client['name']} added successfully",
     }
-
 
 def _handle_check_balance_reminders(data: dict) -> dict:
     user_balance = data.get("balance", 0)
@@ -371,23 +338,16 @@ def _handle_check_balance_reminders(data: dict) -> dict:
         },
     }
 
-
-# ------------------------------------------------------------------ #
-#  Helpers                                                            #
-# ------------------------------------------------------------------ #
-
 def _parse_month_year(iso_string):
     """Return (month_index_0_based, year) from an ISO datetime string."""
     if not iso_string:
         return (None, None)
     try:
         dt = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
-        return (dt.month - 1, dt.year)  # 0-based month to match JS getMonth()
+        return (dt.month - 1, dt.year)
     except (ValueError, AttributeError):
         return (None, None)
 
-
-# Register handlers
 _HANDLERS = {
     "create_payment": _handle_create_payment,
     "show_pending_payments": _handle_show_pending_payments,

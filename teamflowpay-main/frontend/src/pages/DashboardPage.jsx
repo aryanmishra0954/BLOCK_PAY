@@ -56,7 +56,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Derived metrics
   const outflowTxs = transactions.filter((t) => t.type === "sent");
   const pendingTxs = transactions.filter((t) => t.status === "pending");
   const totalOutflowAmount = outflowTxs.reduce(
@@ -66,7 +65,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
-      {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-lg border border-emerald-500/30 bg-[#101216]/95 backdrop-blur-md text-emerald-300 font-mono text-xs shadow-2xl flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -74,7 +72,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Main Balance Hero Card */}
       <BalanceCard
         user={user}
         walletAddress={walletAddress}
@@ -84,21 +81,17 @@ export default function DashboardPage() {
         onClaimFaucet={handleClaimFaucet}
       />
 
-      {/* Metrics Row */}
       <MetricsRow
         outflowCount={outflowTxs.length}
         totalOutflowAmount={totalOutflowAmount}
         pendingCount={pendingTxs.length}
       />
 
-      {/* AI Command Center Section */}
       <div id="ai-command">
         <AICommandCenter onCommandExecuted={() => loadTransactions()} />
       </div>
 
-      {/* Split View: Recent Activity + Liquidity Safeguard */}
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Recent Activity Table (2 Cols) */}
         <div className="lg:col-span-2">
           <RecentActivityCard
             transactions={transactions}
@@ -106,7 +99,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Sidebar: Liquidity Safeguard & Quick Navigation (1 Col) */}
         <div className="space-y-6">
           <LiquiditySafeguardCard pendingTransactions={pendingTxs} />
           <QuickNavCard />

@@ -96,9 +96,7 @@ export default function PaymentSimulator() {
           </p>
         </div>
 
-        {/* Demo Console */}
         <div className="max-w-3xl mx-auto card-base p-6 sm:p-7 shadow-lg border border-[#222630]">
-          {/* Console Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-5 border-b border-[#1f232b] gap-2">
             <div className="flex items-center gap-2.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -111,7 +109,6 @@ export default function PaymentSimulator() {
             </div>
           </div>
 
-          {/* Example Prompts */}
           <div className="mb-5">
             <p className="text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-wider mb-2">
               Try an Example:
@@ -134,7 +131,6 @@ export default function PaymentSimulator() {
             </div>
           </div>
 
-          {/* Prompt Dispatch Box */}
           <div className="mb-5">
             <label className="block text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-wider mb-2">
               Your Command in Plain English
@@ -169,7 +165,6 @@ export default function PaymentSimulator() {
             </div>
           </div>
 
-          {/* Result Box */}
           <div>
             <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 mb-2">
               <span className="flex items-center gap-1.5">

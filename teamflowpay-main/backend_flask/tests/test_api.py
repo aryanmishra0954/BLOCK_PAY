@@ -66,12 +66,10 @@ TEST_COMMANDS = [
     },
 ]
 
-
 def run_tests():
     print("[TEST] Testing BlockPay AI Agent Flask Backend\n")
     print(f"Make sure the server is running on {BASE_URL}\n")
 
-    # 1. Health check
     print("1. Testing health endpoint...")
     try:
         resp = requests.get(f"{BASE_URL}/health", timeout=5)
@@ -83,7 +81,6 @@ def run_tests():
         print("  Make sure the server is running: python app.py\n")
         return
 
-    # 2-6. Execute each test command
     for idx, test in enumerate(TEST_COMMANDS, start=2):
         print(f"{idx}. Testing: {test['name']}")
         try:
@@ -110,7 +107,6 @@ def run_tests():
         print()
 
     print("[DONE] Tests complete!\n")
-
 
 if __name__ == "__main__":
     run_tests()

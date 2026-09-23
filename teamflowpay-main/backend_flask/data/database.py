@@ -3,7 +3,6 @@ Simple in-memory database for BlockPay.
 Replace with real database (PostgreSQL, MongoDB, etc.) in production.
 """
 
-
 class InMemoryDatabase:
     """In-memory data store with CRUD operations for payments, clients, and reminders."""
 
@@ -12,10 +11,6 @@ class InMemoryDatabase:
         self.clients = []
         self.reminders = []
         self._initialize_sample_data()
-
-    # ------------------------------------------------------------------ #
-    #  Sample Data                                                        #
-    # ------------------------------------------------------------------ #
 
     def _initialize_sample_data(self):
         """Populate the database with sample records."""
@@ -81,10 +76,6 @@ class InMemoryDatabase:
             },
         ]
 
-    # ------------------------------------------------------------------ #
-    #  Payment Methods                                                    #
-    # ------------------------------------------------------------------ #
-
     def get_payments(self):
         return list(self.payments)
 
@@ -107,10 +98,6 @@ class InMemoryDatabase:
             if p["id"] == payment_id:
                 return self.payments.pop(i)
         return None
-
-    # ------------------------------------------------------------------ #
-    #  Client Methods                                                     #
-    # ------------------------------------------------------------------ #
 
     def get_clients(self):
         return list(self.clients)
@@ -140,10 +127,6 @@ class InMemoryDatabase:
                 return self.clients.pop(i)
         return None
 
-    # ------------------------------------------------------------------ #
-    #  Reminder Methods                                                   #
-    # ------------------------------------------------------------------ #
-
     def get_reminders(self):
         return list(self.reminders)
 
@@ -167,10 +150,6 @@ class InMemoryDatabase:
                 return self.reminders.pop(i)
         return None
 
-    # ------------------------------------------------------------------ #
-    #  Utility Methods                                                    #
-    # ------------------------------------------------------------------ #
-
     def reset(self):
         """Reset all collections and reload sample data."""
         self.payments = []
@@ -188,6 +167,4 @@ class InMemoryDatabase:
             ),
         }
 
-
-# Singleton instance
 db = InMemoryDatabase()

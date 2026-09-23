@@ -66,7 +66,6 @@ export default function PriceTicker() {
         />
       </button>
 
-      {/* Popover Dropdown */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-64 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-xl p-3.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100">
           <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800">
@@ -90,7 +89,6 @@ export default function PriceTicker() {
             </button>
           </div>
 
-          {/* POL Rates */}
           <div className="mt-2.5 space-y-1.5 text-xs">
             <div className="text-[10px] uppercase font-mono font-semibold text-zinc-500 tracking-wider">
               Polygon (POL)
@@ -109,7 +107,6 @@ export default function PriceTicker() {
             </div>
           </div>
 
-          {/* Benchmark Markets */}
           <div className="mt-3 pt-2.5 border-t border-zinc-800 space-y-1.5 text-xs">
             <div className="text-[10px] uppercase font-mono font-semibold text-zinc-500 tracking-wider">
               Crypto Benchmarks

@@ -14,34 +14,20 @@ from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request
 
-# Ensure the package root is on sys.path so absolute imports work
-# regardless of how the file is invoked.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import Config
-from data.db import init_db
+from data.db import init_db, get_active_engine
 from routes.agent import agent_bp
 from routes.auth import auth_bp
 from routes.transactions import transactions_bp
 from routes.contacts import contacts_bp
-
-
-# ------------------------------------------------------------------ #
-#  App Factory                                                        #
-# ------------------------------------------------------------------ #
 
 def create_app() -> Flask:
     """Create and configure the Flask application."""
 
     application = Flask(__name__)
 
-    # ---- CORS (mirrors the Express CORS setup) ----
-    # The Express backend uses a custom origin callback that allows:
-    #   1. Requests with no Origin header (e.g. server-to-server)
-    #   2. Origins in the ALLOWED_ORIGINS list
-    #   3. Any *.vercel.app subdomain
-    # flask-cors doesn't support a function for origins, so we use
-    # a manual @after_request handler instead.
     allowed_origins = set(Config.ALLOWED_ORIGINS)
 
     @application.before_request
@@ -54,7 +40,6 @@ def create_app() -> Flask:
     def _apply_cors(response):
         origin = request.headers.get("Origin")
         if origin is None:
-            # No Origin header — allow (same behaviour as Express)
             return response
         if (
             origin in allowed_origins
@@ -73,7 +58,6 @@ def create_app() -> Flask:
             )
         return response
 
-    # ---- Request logging (development only) ----
     if Config.FLASK_ENV != "production":
 
         @application.before_request
@@ -81,7 +65,6 @@ def create_app() -> Flask:
             ts = datetime.now(timezone.utc).isoformat()
             print(f"[{ts}] {request.method} {request.path}")
 
-    # ---- Root endpoint ----
     @application.route("/")
     def index():
         return jsonify({
@@ -96,7 +79,6 @@ def create_app() -> Flask:
             },
         })
 
-    # ---- Health check ----
     @application.route("/health")
     def health():
         return jsonify({
@@ -104,18 +86,19 @@ def create_app() -> Flask:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "service": "BlockPay AI Agent Backend (Flask)",
             "environment": Config.FLASK_ENV,
+            "database": {
+                "engine": get_active_engine(),
+                "connected": True,
+            },
         })
 
-    # ---- Initialize Persistent Database ----
     init_db()
 
-    # ---- Agent & Business API routes ----
     application.register_blueprint(agent_bp)
     application.register_blueprint(auth_bp)
     application.register_blueprint(transactions_bp)
     application.register_blueprint(contacts_bp)
 
-    # ---- 404 handler ----
     @application.errorhandler(404)
     def not_found(_error):
         return jsonify({
@@ -128,7 +111,6 @@ def create_app() -> Flask:
             ],
         }), 404
 
-    # ---- 500 handler ----
     @application.errorhandler(500)
     def server_error(error):
         return jsonify({
@@ -139,16 +121,7 @@ def create_app() -> Flask:
 
     return application
 
-
-# ------------------------------------------------------------------ #
-#  Module-level app (used by Vercel / gunicorn)                       #
-# ------------------------------------------------------------------ #
-
 app = create_app()
-
-# ------------------------------------------------------------------ #
-#  Dev server                                                         #
-# ------------------------------------------------------------------ #
 
 if __name__ == "__main__":
     port = Config.PORT

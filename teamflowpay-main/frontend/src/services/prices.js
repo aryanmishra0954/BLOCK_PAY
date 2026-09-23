@@ -1,15 +1,9 @@
-/**
- * BlockPay Live Crypto & FX Price Service
- * Fetches real-time price feeds for POL, ETH, BTC vs USD, EUR, INR.
- * Uses 60-second caching to stay well within CoinGecko public rate limits.
- */
 
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const CACHE_TTL_MS = 60 * 1000;
 
 let cachedPrices = null;
 let lastFetchTime = 0;
 
-// High-confidence realistic fallback prices if API is unreachable/rate-limited
 export const DEFAULT_PRICES = {
   pol: {
     usd: 0.58,
@@ -32,13 +26,9 @@ export const DEFAULT_PRICES = {
   timestamp: Date.now(),
 };
 
-/**
- * Fetch live rates from CoinGecko API with automatic caching and graceful fallback.
- */
 export async function fetchLiveCryptoPrices() {
   const now = Date.now();
 
-  // Return cached result if still fresh
   if (cachedPrices && now - lastFetchTime < CACHE_TTL_MS) {
     return cachedPrices;
   }

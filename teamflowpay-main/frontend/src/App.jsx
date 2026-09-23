@@ -6,7 +6,6 @@ import { PriceProvider } from "./context/PriceContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
-// Pages
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
 import SendPage from "./pages/SendPage";
