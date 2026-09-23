@@ -4,7 +4,6 @@
 [![React 18](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](https://vitejs.dev/)
 [![Flask](https://img.shields.io/badge/Backend-Python%20Flask-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Groq AI](https://img.shields.io/badge/AI%20Engine-Groq%20LLaMA%203.3%2070B-F55036)](https://groq.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **BlockPay** is a non-custodial, high-performance Web3 payments platform and AI financial command center built on the **Polygon Amoy Testnet**. It enables friction-free peer-to-peer transfers, batch disbursements, shareable payment requests, live crypto/fiat FX conversions, and natural language payment dispatch powered by autonomous AI.
 
