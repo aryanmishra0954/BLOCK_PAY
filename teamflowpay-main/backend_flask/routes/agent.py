@@ -3,12 +3,29 @@ API routes for the BlockPay AI Agent.
 Flask Blueprint equivalent of backend/routes/agent.js.
 """
 
-from flask import Blueprint, request, jsonify
+import io
+import csv
+from flask import Blueprint, request, jsonify, Response
 
 from services.ai_service import ai_service
 from services.command_executor import validate_command, execute_command, CommandError
+from data.db import (
+    get_user_by_token,
+    get_user_by_email,
+    get_user_by_wallet,
+    get_user_transactions,
+)
 
 agent_bp = Blueprint("agent", __name__, url_prefix="/api/agent")
+
+def _resolve_user():
+    auth_header = request.headers.get("Authorization", "")
+    token = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    if not token:
+        token = request.args.get("token") or request.headers.get("X-Auth-Token")
+    return get_user_by_token(token) if token else None
 
 @agent_bp.route("/command", methods=["POST"])
 def command():
@@ -23,11 +40,14 @@ def command():
             }), 400
 
         print(f'[CMD] Received prompt: "{prompt}"')
+        user = _resolve_user()
+        if not user:
+            return jsonify({"success": False, "error": "Authentication required."}), 401
 
         ai_command = ai_service.generate_command(prompt)
         print(f"[AI] Generated command: {ai_command}")
 
-        validation = validate_command(ai_command)
+        validation = validate_command(ai_command, user=user)
         if not validation["valid"]:
             err_msg = validation["errors"][0] if validation["errors"] else "AI generated invalid command"
             return jsonify({
@@ -37,7 +57,7 @@ def command():
                 "command": ai_command,
             }), 400
 
-        result = execute_command(ai_command)
+        result = execute_command(ai_command, user=user)
 
         return jsonify({
             "success": True,
@@ -60,7 +80,10 @@ def execute():
     try:
         command_body = request.get_json(silent=True) or {}
 
-        validation = validate_command(command_body)
+        user = _resolve_user()
+        if not user:
+            return jsonify({"success": False, "error": "Authentication required."}), 401
+        validation = validate_command(command_body, user=user)
         if not validation["valid"]:
             err_msg = validation["errors"][0] if validation["errors"] else "Invalid command"
             return jsonify({
@@ -68,7 +91,7 @@ def execute():
                 "details": validation["errors"],
             }), 400
 
-        result = execute_command(command_body)
+        result = execute_command(command_body, user=user)
 
         return jsonify({
             "success": True,
@@ -91,6 +114,41 @@ def execute():
             "error": str(exc) or "Command execution failed",
             "action": (request.get_json(silent=True) or {}).get("action"),
         }), 500
+
+@agent_bp.route("/download/<path:filename>", methods=["GET"])
+def download_report(filename):
+    user = _resolve_user()
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required."}), 401
+    user_id = user["id"]
+    txs = get_user_transactions(user_id, limit=200)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Date", "Type", "Counterparty Name", "Counterparty Address",
+        "Amount", "Currency", "Status", "TxHash", "Note"
+    ])
+    for tx in txs:
+        date_str = tx.get("created_at") or ""
+        writer.writerow([
+            date_str,
+            tx.get("type", "sent"),
+            tx.get("counterparty_name", ""),
+            tx.get("counterparty_address", ""),
+            tx.get("amount", "0"),
+            tx.get("currency", "POL"),
+            tx.get("status", "success"),
+            tx.get("tx_hash", ""),
+            tx.get("note", "")
+        ])
+
+    csv_bytes = output.getvalue().encode("utf-8")
+    return Response(
+        csv_bytes,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 @agent_bp.route("/actions", methods=["GET"])
 def actions():

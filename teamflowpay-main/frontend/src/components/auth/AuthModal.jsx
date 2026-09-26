@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function AuthModal({ isOpen, onClose, initialMode = "signin", onSuccess }) {
-  const { login, register, loginWithWeb3, loginWithWeb3Auth, loginWithGoogle } = useAuth();
+  const { login, register, loginWithWeb3, loginWithWeb3Auth, loginWithGoogle, loginAsDemo } = useAuth();
   const [authMode, setAuthMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,6 +60,22 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
       else onClose();
     } catch (err) {
       setErrorMsg(err.message || "Authentication failed");
+    } finally {
+      setIsSubmitting(false);
+      setActiveProvider(null);
+    }
+  };
+
+  const handleDemoSignIn = async () => {
+    setErrorMsg("");
+    setIsSubmitting(true);
+    setActiveProvider("demo");
+    try {
+      await loginAsDemo();
+      if (onSuccess) onSuccess();
+      else onClose();
+    } catch (err) {
+      setErrorMsg(err.message || "Demo sign-in failed");
     } finally {
       setIsSubmitting(false);
       setActiveProvider(null);
@@ -169,7 +185,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
             {authMode === "signin" ? "Sign in to BlockPay" : "Create Your BlockPay Account"}
           </h3>
           <p className="text-xs text-zinc-400 mt-1 font-sans">
-            Choose your preferred sign-in method. New accounts receive 10,000 free Test POL.
+            Choose your preferred sign-in method. New accounts start at 0 POL; test funds are added explicitly.
           </p>
         </div>
 
@@ -225,7 +241,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 <h4 className="text-white text-xs font-bold">Google Web3 Authentication</h4>
               </div>
               <p className="text-[11px] text-zinc-400">
-                Enter your Google account email to link or generate your non-custodial Polygon wallet with 10,000 Test POL.
+                Enter your Google account email to link or generate your non-custodial Polygon wallet with test funds added explicitly.
               </p>
             </div>
 
@@ -276,6 +292,34 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
         ) : (
           <>
             <div className="space-y-2.5 mb-5 font-sans">
+              <button
+                type="button"
+                onClick={handleDemoSignIn}
+                disabled={isSubmitting}
+                className="w-full p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-white font-semibold text-xs flex items-center justify-between transition shadow-sm disabled:opacity-50 group mb-1.5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white text-xs font-semibold flex items-center gap-1.5">
+                      <span>Instant Demo Sign-In</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">Test funds</span>
+                    </p>
+                    <p className="text-[10px] text-zinc-400 font-normal">Satoshi Nakamoto • Full persistent DB ledger</p>
+                  </div>
+                </div>
+
+                {isSubmitting && activeProvider === "demo" ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                ) : (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    1-Click
+                  </span>
+                )}
+              </button>
+
               <button
                 type="button"
                 onClick={handleWeb3AuthConnect}
@@ -430,7 +474,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                   <span>
                     {authMode === "signin"
                       ? "Sign In with Email"
-                      : "Create Account & Get 10,000 POL"}
+                      : "Create Account"}
                   </span>
                 )}
               </button>
@@ -473,4 +517,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
     </div>
   );
 }
+
+
 

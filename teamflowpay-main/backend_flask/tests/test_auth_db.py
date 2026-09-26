@@ -48,6 +48,16 @@ def test_auth():
 
     active_token = res_login.get_json()["token"]
 
+    recipient_email = f"recipient_{uuid.uuid4().hex[:8]}@blockpay.io"
+    recipient_res = client.post("/api/auth/register", json={
+        "email": recipient_email,
+        "password": "recipientsecret",
+        "full_name": "Gamma Protocol",
+    })
+    recipient_address = recipient_res.get_json()["user"]["wallet_address"]
+    fund_res = client.post("/api/transactions/fund", headers={"Authorization": f"Bearer {active_token}"}, json={"amount": 500})
+    assert fund_res.status_code == 201
+
     print("Testing /api/auth/me...")
     res_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {active_token}"})
     print(f"Me status: {res_me.status_code}, data: {res_me.get_json()}")
@@ -58,9 +68,10 @@ def test_auth():
         "type": "sent",
         "amount": 250.0,
         "currency": "POL",
-        "counterparty_address": "0x8Ba1f109551bD432803012645Ac136ddd64DBA72",
+        "counterparty_address": recipient_address,
         "counterparty_name": "Gamma Protocol",
-        "note": "Production test settlement"
+        "note": "Production test settlement",
+        "mode": "internal",
     }, headers={"Authorization": f"Bearer {active_token}"})
     print(f"Transaction status: {res_tx.status_code}, data: {res_tx.get_json()}")
     assert res_tx.status_code == 201

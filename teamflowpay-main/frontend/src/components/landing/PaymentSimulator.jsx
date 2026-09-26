@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { ArrowRight, Loader2, Check } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 export default function PaymentSimulator() {
+  const { isAuthenticated } = useAuth();
   const [instruction, setInstruction] = useState(
     "Send 50 POL to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e for office supplies"
   );
@@ -48,6 +50,16 @@ export default function PaymentSimulator() {
     const start = performance.now();
 
     try {
+      if (!isAuthenticated) {
+        setLatencyText("Demo simulation • no account required");
+        setSimOutput(JSON.stringify({
+          status: "simulation_only",
+          message: "Sign in to run authenticated balance and ledger commands.",
+          prompt: instruction,
+          side_effects: "none",
+        }, null, 2));
+        return;
+      }
       const res = await fetch("/api/agent/command", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -3,7 +3,8 @@ import uuid
 import secrets
 import sqlite3
 import urllib.parse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from werkzeug.security import generate_password_hash
 
 try:
     import psycopg2
@@ -167,6 +168,7 @@ def init_db():
                 wallet_address VARCHAR(64) UNIQUE NOT NULL,
                 balance DOUBLE PRECISION DEFAULT 10000.0,
                 token TEXT,
+                token_expires_at VARCHAR(50),
                 auth_provider VARCHAR(50) DEFAULT 'email',
                 provider_id TEXT,
                 avatar_url TEXT,
@@ -220,6 +222,7 @@ def init_db():
                 created_at VARCHAR(50) NOT NULL
             )
         """)
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS token_expires_at VARCHAR(50)")
         conn.commit()
         conn.close()
         print("[DB] Initialized PostgreSQL database tables")
@@ -233,6 +236,7 @@ def init_db():
                 wallet_address TEXT UNIQUE NOT NULL,
                 balance REAL DEFAULT 10000.0,
                 token TEXT,
+                token_expires_at TEXT,
                 auth_provider TEXT DEFAULT 'email',
                 provider_id TEXT,
                 avatar_url TEXT,
@@ -257,6 +261,10 @@ def init_db():
             pass
         try:
             cursor.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN token_expires_at TEXT")
         except Exception:
             pass
         cursor.execute("""
@@ -304,8 +312,70 @@ def init_db():
         conn.commit()
         conn.close()
         print(f"[DB] Initialized SQLite database at {DB_PATH}")
+    seed_initial_demo_data()
 
-def create_user(email: str, password_hash: str, full_name: str, wallet_address: str, initial_balance: float = 10000.0) -> dict:
+def seed_initial_demo_data():
+    try:
+        trader = get_user_by_email("trader@blockpay.io")
+        if not trader:
+            pwd_hash = generate_password_hash("password123")
+            trader = create_user(
+                email="trader@blockpay.io",
+                password_hash=pwd_hash,
+                full_name="Satoshi Nakamoto",
+                wallet_address="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+                initial_balance=0.0,
+            )
+
+        sarah = get_user_by_email("sarah@flowpay.xyz")
+        if not sarah:
+            pwd_hash = generate_password_hash("password123")
+            sarah = create_user(
+                email="sarah@flowpay.xyz",
+                password_hash=pwd_hash,
+                full_name="Sarah Chen",
+                wallet_address="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+                initial_balance=0.0,
+            )
+
+        if trader:
+            contacts = get_user_contacts(trader["id"])
+            if not contacts:
+                create_contact(trader["id"], "Sarah Chen (UI Lead)", "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", "sarah@flowpay.xyz")
+                create_contact(trader["id"], "Alex Mercer (Smart Contracts)", "0x90F79bf6EB2c4f870365E785982E1f101E93b906", "alex@ethereum.org")
+                create_contact(trader["id"], "Ditre Italia (Vendor)", "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65", "billing@ditreitalia.com")
+                create_contact(trader["id"], "Gamma Logistics", "0x9965507D1a55bcC2695C58ba16FB37d819B0A4df", "ops@gammalogistics.io")
+
+            txs = get_user_transactions(trader["id"], limit=5)
+            # New demo accounts intentionally start at zero. Test funds are added
+            # only through the explicit funding endpoint.
+
+            invs = get_user_invoices(trader["id"])
+            if not invs:
+                create_invoice(
+                    user_id=trader["id"],
+                    client_name="Ditre Italia",
+                    amount=500.0,
+                    due_date="2026-10-15",
+                    currency="POL",
+                    client_email="billing@ditreitalia.com",
+                    description="Monthly protocol licensing and UI maintenance",
+                    status="pending"
+                )
+                create_invoice(
+                    user_id=trader["id"],
+                    client_name="Gamma Logistics",
+                    amount=1200.0,
+                    due_date="2026-10-30",
+                    currency="POL",
+                    client_email="ops@gammalogistics.io",
+                    description="Q4 Settlement milestone",
+                    status="pending"
+                )
+    except Exception as e:
+        print(f"[DB] Seed notice: {e}")
+
+def create_user(email: str, password_hash: str, full_name: str, wallet_address: str, initial_balance: float = 0.0) -> dict:
     conn = get_db_connection()
     cursor = conn.cursor()
     user_id = str(uuid.uuid4())
@@ -343,13 +413,21 @@ def get_user_by_token(token: str) -> dict:
     cursor.execute("SELECT * FROM users WHERE token = ?", (token,))
     row = cursor.fetchone()
     conn.close()
+    if row and row.get("token_expires_at"):
+        try:
+            if datetime.fromisoformat(row["token_expires_at"]) <= datetime.now(timezone.utc):
+                return None
+        except (TypeError, ValueError):
+            return None
     return row
 
 def update_user_token(user_id: str, token: str):
+    from config import Config
     conn = get_db_connection()
     cursor = conn.cursor()
     now = datetime.now(timezone.utc).isoformat()
-    cursor.execute("UPDATE users SET token = ?, last_login = ? WHERE id = ?", (token, now, user_id))
+    expires = (datetime.now(timezone.utc) + timedelta(hours=Config.SESSION_TTL_HOURS)).isoformat() if token else None
+    cursor.execute("UPDATE users SET token = ?, token_expires_at = ?, last_login = ? WHERE id = ?", (token, expires, now, user_id))
     conn.commit()
     conn.close()
 
@@ -377,7 +455,7 @@ def get_user_by_wallet(wallet_address: str) -> dict:
     conn.close()
     return row
 
-def create_web3_user(wallet_address: str, initial_balance: float = 10000.0) -> dict:
+def create_web3_user(wallet_address: str, initial_balance: float = 0.0) -> dict:
     conn = get_db_connection()
     cursor = conn.cursor()
     user_id = str(uuid.uuid4())
@@ -474,18 +552,115 @@ def add_transaction(user_id: str, tx_type: str, amount: float, counterparty_addr
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (tx_id, user_id, tx_type, amount, currency, counterparty_address, counterparty_name, tx_hash, status, note, now))
     user = get_user_by_id(user_id)
-    if user:
+    if user and status != "submitted":
         current_bal = float(user["balance"])
         if tx_type == "sent":
             new_bal = max(0.0, current_bal - amount)
         else:
             new_bal = current_bal + amount
         cursor.execute("UPDATE users SET balance = ? WHERE id = ?", (new_bal, user_id))
+
+    # Bi-directional P2P transfer: if counterparty is another registered user, credit their ledger
+    if tx_type == "sent" and counterparty_address:
+        clean_addr = counterparty_address.strip().lower()
+        cursor.execute("SELECT * FROM users WHERE LOWER(wallet_address) = ? OR LOWER(email) = ?", (clean_addr, clean_addr))
+        recipient_user = cursor.fetchone()
+        if recipient_user and recipient_user["id"] != user_id:
+            rec_id = str(uuid.uuid4())
+            rec_hash = f"{tx_hash}-rx"
+            sender_addr = user["wallet_address"] if user else "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+            sender_name = user["full_name"] if user else "BlockPay User"
+            cursor.execute("""
+                INSERT INTO transactions (id, user_id, type, amount, currency, counterparty_address, counterparty_name, tx_hash, status, note, created_at)
+                VALUES (?, ?, 'received', ?, ?, ?, ?, ?, 'success', ?, ?)
+            """, (rec_id, recipient_user["id"], amount, currency, sender_addr, sender_name, rec_hash, note or f"Transfer from {sender_name}", now))
+            rec_new_bal = float(recipient_user["balance"]) + amount
+            cursor.execute("UPDATE users SET balance = ? WHERE id = ?", (rec_new_bal, recipient_user["id"]))
+
     conn.commit()
     cursor.execute("SELECT * FROM transactions WHERE id = ?", (tx_id,))
     row = cursor.fetchone()
     conn.close()
     return row
+
+def transfer_between_users(sender_id: str, recipient_address: str, amount: float,
+                           tx_hash: str, currency: str = "POL", note: str = "") -> tuple:
+    """Atomically move test-ledger funds between two registered BlockPay users."""
+    import math
+    if not isinstance(amount, (int, float)) or not math.isfinite(float(amount)) or float(amount) <= 0:
+        raise ValueError("Amount must be a finite positive number.")
+    if currency.upper() != "POL":
+        raise ValueError("Internal transfers currently support POL test funds only.")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        if get_active_engine() == "sqlite":
+            cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute("SELECT * FROM users WHERE id = ?", (sender_id,))
+        sender = cursor.fetchone()
+        cursor.execute("SELECT * FROM users WHERE LOWER(wallet_address) = ? OR LOWER(email) = ?",
+                       (recipient_address.strip().lower(), recipient_address.strip().lower()))
+        recipient = cursor.fetchone()
+        if not sender or not recipient:
+            raise LookupError("Recipient must be a registered BlockPay account.")
+        if sender["id"] == recipient["id"]:
+            raise ValueError("Sender and recipient must be different accounts.")
+        sender_balance = float(sender["balance"])
+        amount = float(amount)
+        if sender_balance < amount:
+            raise ValueError("Insufficient test-fund balance.")
+        now = datetime.now(timezone.utc).isoformat()
+        sender_tx_id = str(uuid.uuid4())
+        recipient_tx_id = str(uuid.uuid4())
+        cursor.execute("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?",
+                       (amount, sender_id, amount))
+        if cursor.rowcount != 1:
+            raise ValueError("Insufficient test-fund balance.")
+        cursor.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (amount, recipient["id"]))
+        cursor.execute("""INSERT INTO transactions
+            (id,user_id,type,amount,currency,counterparty_address,counterparty_name,tx_hash,status,note,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)""", (sender_tx_id, sender_id, "sent", amount, currency.upper(),
+            recipient["wallet_address"], recipient["full_name"], tx_hash, "success", note, now))
+        cursor.execute("""INSERT INTO transactions
+            (id,user_id,type,amount,currency,counterparty_address,counterparty_name,tx_hash,status,note,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)""", (recipient_tx_id, recipient["id"], "received", amount, currency.upper(),
+            sender["wallet_address"], sender["full_name"], f"{tx_hash}-rx", "success", note, now))
+        conn.commit()
+        return get_user_by_id(sender_id), get_user_by_id(recipient["id"]), sender_tx_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+def record_test_funding(user_id: str, amount: float, tx_hash: str = None) -> dict:
+    import math
+    if not isinstance(amount, (int, float)) or not math.isfinite(float(amount)) or float(amount) <= 0:
+        raise ValueError("Funding amount must be a finite positive number.")
+    tx_hash = tx_hash or ("testfund-" + uuid.uuid4().hex)
+    from config import Config
+    conn = get_db_connection(); cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        user = cursor.fetchone()
+        if not user: raise LookupError("Account not found.")
+        cursor.execute("SELECT COALESCE(SUM(amount), 0) AS total FROM transactions WHERE user_id = ? AND note = ?", (user_id, "Explicit test-fund allocation"))
+        funded = float((cursor.fetchone() or {}).get("total", 0) or 0)
+        if funded + float(amount) > Config.TEST_FUNDING_LIMIT:
+            raise ValueError(f"Test funding limit is {Config.TEST_FUNDING_LIMIT:.2f} POL per account.")
+        now = datetime.now(timezone.utc).isoformat()
+        cursor.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (float(amount), user_id))
+        cursor.execute("""INSERT INTO transactions
+            (id,user_id,type,amount,currency,counterparty_address,counterparty_name,tx_hash,status,note,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)""", (str(uuid.uuid4()), user_id, "received", float(amount), "POL",
+            "0x0000000000000000000000000000000000000000", "BlockPay Test Fund", tx_hash, "success",
+            "Explicit test-fund allocation", now))
+        conn.commit()
+        return get_user_by_id(user_id)
+    except Exception:
+        conn.rollback(); raise
+    finally:
+        conn.close()
 
 def get_user_transactions(user_id: str, limit: int = 50) -> list:
     conn = get_db_connection()
@@ -499,6 +674,14 @@ def get_user_transactions(user_id: str, limit: int = 50) -> list:
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+def get_transaction_by_hash(tx_hash: str, user_id: str = None) -> dict:
+    conn = get_db_connection(); cursor = conn.cursor()
+    if user_id:
+        cursor.execute("SELECT * FROM transactions WHERE tx_hash = ? AND user_id = ?", (tx_hash, user_id))
+    else:
+        cursor.execute("SELECT * FROM transactions WHERE tx_hash = ?", (tx_hash,))
+    row = cursor.fetchone(); conn.close(); return row
 
 def get_user_contacts(user_id: str) -> list:
     conn = get_db_connection()
@@ -581,3 +764,87 @@ def get_contact_by_name(user_id: str, name: str) -> dict:
         row = cursor.fetchone()
     conn.close()
     return row
+
+def create_invoice(user_id: str, client_name: str, amount: float, due_date: str,
+                   currency: str = "POL", client_email: str = "", description: str = "",
+                   status: str = "pending") -> dict:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    inv_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    cursor.execute("""
+        INSERT INTO invoices (id, user_id, client_name, client_email, amount, currency, due_date, description, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (inv_id, user_id, client_name.strip(), client_email.strip().lower() if client_email else "",
+          float(amount), currency.upper(), due_date, description or f"Invoice for {client_name}", status, now))
+    conn.commit()
+    cursor.execute("SELECT * FROM invoices WHERE id = ?", (inv_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+def get_user_invoices(user_id: str, status: str = None) -> list:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if status and status != "all":
+        cursor.execute("""
+            SELECT * FROM invoices
+            WHERE user_id = ? AND status = ?
+            ORDER BY created_at DESC
+        """, (user_id, status))
+    else:
+        cursor.execute("""
+            SELECT * FROM invoices
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        """, (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def get_invoice_by_id(invoice_id: str, user_id: str = None) -> dict:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if user_id:
+        cursor.execute("SELECT * FROM invoices WHERE id = ? AND user_id = ?", (invoice_id, user_id))
+    else:
+        cursor.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+def pay_invoice(invoice_id: str, user_id: str) -> dict:
+    """Settle an invoice by atomically moving POL from payer to invoice owner."""
+    conn = get_db_connection(); cursor = conn.cursor()
+    try:
+        if get_active_engine() == "sqlite":
+            cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,))
+        invoice = cursor.fetchone()
+        if not invoice:
+            return None
+        if invoice["status"] == "paid":
+            raise ValueError("Invoice has already been paid.")
+        if invoice["user_id"] == user_id:
+            raise ValueError("The invoice owner cannot pay their own invoice.")
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,)); payer = cursor.fetchone()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (invoice["user_id"],)); owner = cursor.fetchone()
+        if not payer or not owner:
+            raise LookupError("Invoice account not found.")
+        amount = float(invoice["amount"])
+        if float(payer["balance"]) < amount:
+            raise ValueError("Insufficient test-fund balance.")
+        now = datetime.now(timezone.utc).isoformat(); tx_hash = "invoice-" + uuid.uuid4().hex
+        cursor.execute("UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?", (amount, user_id, amount))
+        if cursor.rowcount != 1: raise ValueError("Insufficient test-fund balance.")
+        cursor.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (amount, owner["id"]))
+        for uid, typ, addr, name, suffix in ((user_id, "sent", owner["wallet_address"], owner["full_name"], ""), (owner["id"], "received", payer["wallet_address"], payer["full_name"], "-rx")):
+            cursor.execute("""INSERT INTO transactions (id,user_id,type,amount,currency,counterparty_address,counterparty_name,tx_hash,status,note,created_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)""", (str(uuid.uuid4()), uid, typ, amount, invoice["currency"], addr, name, tx_hash + suffix, "success", f"Invoice {invoice_id}", now))
+        cursor.execute("UPDATE invoices SET status = 'paid' WHERE id = ? AND status = 'pending'", (invoice_id,))
+        if cursor.rowcount != 1: raise ValueError("Invoice has already been paid.")
+        conn.commit(); cursor.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,)); return cursor.fetchone()
+    except Exception:
+        conn.rollback(); raise
+    finally:
+        conn.close()

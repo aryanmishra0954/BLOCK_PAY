@@ -6,13 +6,14 @@ export default function PaymentRequestBuilder({ walletAddress }) {
   const [requestCurrency, setRequestCurrency] = useState("POL");
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const fallbackAddress = walletAddress || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+  const fallbackAddress = walletAddress || "";
 
-  const generatedLink = `${window.location.origin}/send?to=${fallbackAddress}${
+  const generatedLink = `${window.location.origin}/send?to=${encodeURIComponent(fallbackAddress)}${
     requestAmount ? `&amount=${requestAmount}&currency=${requestCurrency}` : ""
   }`;
 
   const handleCopyLink = async () => {
+    if (!fallbackAddress) return;
     try {
       await navigator.clipboard.writeText(generatedLink);
       setLinkCopied(true);
@@ -124,7 +125,7 @@ export default function PaymentRequestBuilder({ walletAddress }) {
 
         <div className="pt-2 border-t border-[#1f232b]">
           <a
-            href={`https://amoy.polygonscan.com/address/${fallbackAddress}`}
+            href={fallbackAddress ? `https://amoy.polygonscan.com/address/${fallbackAddress}` : undefined}
             target="_blank"
             rel="noopener noreferrer"
             className="text-zinc-400 hover:text-white text-xs flex items-center justify-between p-3 rounded-xl bg-[#0c0d10] border border-[#20242c] transition group font-sans"

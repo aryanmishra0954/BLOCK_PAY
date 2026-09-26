@@ -76,7 +76,7 @@ export default function ArchitecturePipeline({ onGetStarted, isAuthenticated }) 
             Ready to start sending payments?
           </h4>
           <p className="font-sans text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto mb-6">
-            Get started with 10,000 free Test POL tokens. Test payments, generate invoices, and track transactions with zero real money risk.
+            Start at zero, then add clearly labelled test funds. Test payments, invoices, and accounting flows without real money.
           </p>
           <button
             onClick={onGetStarted}
@@ -90,3 +90,4 @@ export default function ArchitecturePipeline({ onGetStarted, isAuthenticated }) 
     </section>
   );
 }
+

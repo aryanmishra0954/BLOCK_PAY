@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const { balance, walletAddress, refreshBalance, claimTestFunds } = useWallet();
 
   const [transactions, setTransactions] = useState([]);
+  const [pendingInvoicesCount, setPendingInvoicesCount] = useState(0);
   const [isLoadingTx, setIsLoadingTx] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -25,6 +26,9 @@ export default function DashboardPage() {
       const res = await BlockPayAPI.transactions.getAll(10);
       if (res && res.transactions) {
         setTransactions(res.transactions);
+      }
+      if (res && typeof res.pending_invoices_count === "number") {
+        setPendingInvoicesCount(res.pending_invoices_count);
       }
     } catch (err) {
       console.warn("Ledger transaction loading notice:", err);
@@ -39,9 +43,15 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refreshBalance();
-    await loadTransactions();
-    setTimeout(() => setIsRefreshing(false), 500);
+    try {
+      await refreshBalance();
+      await loadTransactions();
+    } catch (err) {
+      setToastMessage(err.message || "Could not refresh the ledger. Please try again.");
+      setTimeout(() => setToastMessage(null), 3500);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   const handleClaimFaucet = async () => {
@@ -52,12 +62,14 @@ export default function DashboardPage() {
       await loadTransactions();
       setTimeout(() => setToastMessage(null), 3500);
     } catch (err) {
-      console.error(err);
+      setToastMessage(err.message || "Test funding could not be added.");
+      setTimeout(() => setToastMessage(null), 3500);
     }
   };
 
   const outflowTxs = transactions.filter((t) => t.type === "sent");
   const pendingTxs = transactions.filter((t) => t.status === "pending");
+  const pendingCount = pendingInvoicesCount > 0 ? pendingInvoicesCount : pendingTxs.length;
   const totalOutflowAmount = outflowTxs.reduce(
     (sum, t) => sum + (parseFloat(t.amount) || 0),
     0
@@ -84,7 +96,7 @@ export default function DashboardPage() {
       <MetricsRow
         outflowCount={outflowTxs.length}
         totalOutflowAmount={totalOutflowAmount}
-        pendingCount={pendingTxs.length}
+        pendingCount={pendingCount}
       />
 
       <div id="ai-command">

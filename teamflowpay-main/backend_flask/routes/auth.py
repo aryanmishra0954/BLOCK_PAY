@@ -5,6 +5,7 @@ Handles real user registration, secure password hashing, and session management.
 
 import os
 import secrets
+import requests
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -25,6 +26,7 @@ from data.db import (
     get_web3_nonce,
     delete_web3_nonce,
 )
+from config import Config
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -79,7 +81,7 @@ def register():
         password_hash=password_hash,
         full_name=full_name,
         wallet_address=wallet_address,
-        initial_balance=10000.0,
+        initial_balance=0.0,
     )
 
     token = secrets.token_hex(32)
@@ -209,7 +211,7 @@ def verify_web3():
 
     user = get_user_by_wallet(address)
     if not user:
-        user = create_web3_user(wallet_address=address, initial_balance=10000.0)
+        user = create_web3_user(wallet_address=address, initial_balance=0.0)
 
     token = secrets.token_hex(32)
     update_user_token(user["id"], token)
@@ -224,8 +226,28 @@ def verify_web3():
 
 @auth_bp.route("/google/verify", methods=["POST"])
 def verify_google():
-    """Verify Google sign-in payload and create/retrieve user."""
+    """Verify a Google OpenID Connect ID token and create/retrieve user."""
     data = request.get_json() or {}
+    id_token = (data.get("id_token") or data.get("credential") or "").strip()
+    if not id_token:
+        return jsonify({"success": False, "error": "A signed Google ID token is required."}), 401
+    try:
+        token_resp = requests.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": id_token},
+            timeout=5,
+        )
+        claims = token_resp.json() if token_resp.ok else {}
+        if not token_resp.ok or claims.get("email_verified") not in (True, "true"):
+            raise ValueError("Google token is invalid or the email is not verified.")
+        if Config.GOOGLE_CLIENT_ID and claims.get("aud") != Config.GOOGLE_CLIENT_ID:
+            raise ValueError("Google token audience does not match this application.")
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 401
+
+    # Claims from the verified token are authoritative; browser-supplied profile fields are ignored.
+    data = {**data, "email": claims.get("email"), "name": claims.get("name"),
+            "picture": claims.get("picture"), "google_id": claims.get("sub")}
     email = data.get("email", "").strip().lower()
     full_name = data.get("name", "").strip() or data.get("full_name", "").strip()
     google_id = data.get("google_id") or data.get("sub") or data.get("id")
@@ -244,7 +266,7 @@ def verify_google():
         google_id=str(google_id) if google_id else None,
         avatar_url=avatar_url,
         wallet_address=wallet_address,
-        initial_balance=10000.0,
+        initial_balance=0.0,
     )
 
     token = secrets.token_hex(32)

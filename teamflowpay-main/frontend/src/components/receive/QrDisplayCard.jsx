@@ -4,10 +4,11 @@ import { Copy, Check, Download } from "lucide-react";
 
 export default function QrDisplayCard({ walletAddress }) {
   const [copied, setCopied] = useState(false);
-  const fallbackAddress = walletAddress || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+  const fallbackAddress = walletAddress || "";
 
   const handleCopyAddress = async () => {
     try {
+      if (!fallbackAddress) return;
       await navigator.clipboard.writeText(fallbackAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -45,7 +46,7 @@ export default function QrDisplayCard({ walletAddress }) {
       <div className="p-4 bg-white rounded-2xl border border-zinc-200 shadow-md mb-5">
         <QRCodeSVG
           id="wallet-qr-svg"
-          value={`ethereum:${fallbackAddress}@80002`}
+          value={fallbackAddress ? `ethereum:${fallbackAddress}@80002` : ""}
           size={180}
           level="H"
           includeMargin={false}

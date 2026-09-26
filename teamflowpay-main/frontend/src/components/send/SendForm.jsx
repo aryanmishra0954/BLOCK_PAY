@@ -45,7 +45,7 @@ export default function SendForm({
   const [saveToContacts, setSaveToContacts] = useState(false);
   const [newContactName, setNewContactName] = useState("");
 
-  const currentGasFee = 0.0023;
+  const currentGasFee = transferMode === "on_chain" ? 0.0023 : 0;
   const hasMetaMask = typeof window !== "undefined" && Boolean(window.ethereum);
 
   useEffect(() => {
@@ -114,6 +114,15 @@ export default function SendForm({
     }
   };
 
+  const handleClaimTestFunds = async () => {
+    try {
+      await onClaimFaucet(10000);
+      setErrorMsg("");
+    } catch (err) {
+      setErrorMsg(err.message || "Test funding could not be added.");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -129,11 +138,9 @@ export default function SendForm({
       return;
     }
 
-    if (transferMode === "instant" && polEquivalent + currentGasFee > balance) {
+    if (transferMode === "instant" && polEquivalent > balance) {
       setErrorMsg(
-        `Insufficient balance. You require ${(polEquivalent + currentGasFee).toFixed(
-          4
-        )} POL (incl. gas), but have ${balance.toFixed(4)} POL.`
+        `Insufficient balance. You require ${polEquivalent.toFixed(4)} POL, but have ${balance.toFixed(4)} POL.`
       );
       return;
     }
@@ -233,7 +240,7 @@ export default function SendForm({
               <div className="space-y-0.5">
                 <p className="font-semibold text-purple-200">Broadcasts Live to Polygon Amoy Testnet</p>
                 <p className="text-[11px] text-purple-300/80 leading-relaxed">
-                  MetaMask will open to sign and broadcast the transfer directly onto Polygon Amoy (Chain 80002). You will receive a verifiable Polygonscan transaction link.
+                  MetaMask will broadcast to Polygon Amoy. The payment remains pending until a verified receipt is returned.
                 </p>
                 {!hasMetaMask && (
                   <p className="text-[11px] text-rose-400 font-semibold pt-1">
@@ -369,7 +376,7 @@ export default function SendForm({
               </span>
               <button
                 type="button"
-                onClick={() => onClaimFaucet(10000)}
+                onClick={handleClaimTestFunds}
                 className="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 text-[11px] font-semibold transition"
               >
                 +10k Faucet
@@ -439,7 +446,7 @@ export default function SendForm({
               {transferMode === "on_chain" ? "Network Gas (Polygon Amoy):" : "Estimated Network Fee:"}
             </span>
           </div>
-          <span className="text-zinc-300 font-semibold">{currentGasFee} POL</span>
+              <span className="text-zinc-300 font-semibold">{currentGasFee ? `${currentGasFee} POL` : "None (internal ledger)"}</span>
         </div>
 
         <button
@@ -471,3 +478,4 @@ export default function SendForm({
     </div>
   );
 }
+

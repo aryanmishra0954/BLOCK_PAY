@@ -5,8 +5,8 @@ import { usePrices } from "../../context/PriceContext";
 
 export default function BalanceCard({
   user,
-  walletAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-  balance = 10000,
+  walletAddress = "",
+  balance = 0,
   isRefreshing = false,
   onRefresh,
   onClaimFaucet,
@@ -58,7 +58,7 @@ export default function BalanceCard({
             className="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-400 transition flex items-center gap-1.5"
           >
             <Coins className="w-3.5 h-3.5" />
-            <span>+10,000 Test POL</span>
+            <span>+ Test Funds</span>
           </button>
         </div>
       </div>
@@ -118,3 +118,4 @@ export default function BalanceCard({
     </div>
   );
 }
+

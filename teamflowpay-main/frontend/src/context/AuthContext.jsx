@@ -11,15 +11,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function initAuth() {
       const storedToken = localStorage.getItem("authToken");
-      if (!storedToken) {
-        setUser({
-          id: "active-session",
-          email: localStorage.getItem("userEmail") || "trader@BlockPay.io",
-          full_name: localStorage.getItem("userName") || "BlockPay User",
-          wallet_address: localStorage.getItem("walletAddress") || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-          balance: parseFloat(localStorage.getItem("walletBalance") || "10000.0000"),
-          auth_provider: "guest",
-        });
+      const isAuth = localStorage.getItem("isAuthenticated") === "true";
+      if (!storedToken || !isAuth) {
+        setUser(null);
         setIsLoading(false);
         return;
       }
@@ -39,15 +33,7 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.warn("Auth initialization notice:", err);
-        const cachedEmail = localStorage.getItem("userEmail");
-        if (cachedEmail) {
-          setUser({
-            email: cachedEmail,
-            full_name: localStorage.getItem("userName") || "",
-            wallet_address: localStorage.getItem("walletAddress") || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-            balance: parseFloat(localStorage.getItem("walletBalance") || "10000.0000"),
-          });
-        }
+        handleLogoutLocal();
       } finally {
         setIsLoading(false);
       }
@@ -71,6 +57,10 @@ export function AuthProvider({ children }) {
       }
     }
     return res;
+  };
+
+  const loginAsDemo = async () => {
+    return await login("trader@blockpay.io", "password123");
   };
 
   const register = async (email, password, fullName) => {
@@ -154,6 +144,7 @@ export function AuthProvider({ children }) {
     let picture = null;
     let walletAddress = null;
     let googleId = null;
+    let idToken = null;
 
     try {
       const { web3AuthService } = await import("../services/web3auth");
@@ -164,6 +155,7 @@ export function AuthProvider({ children }) {
           name = res.userInfo.name || name;
           picture = res.userInfo.profileImage || null;
           googleId = res.userInfo.verifierId || res.userInfo.id || null;
+          idToken = res.userInfo.idToken || res.userInfo.id_token || null;
         }
         if (res.walletAddress) {
           walletAddress = res.walletAddress;
@@ -181,6 +173,7 @@ export function AuthProvider({ children }) {
     }
 
     const res = await BlockPayAPI.auth.verifyGoogle({
+      id_token: idToken,
       email,
       name: name || email.split("@")[0],
       picture,
@@ -253,6 +246,7 @@ export function AuthProvider({ children }) {
       }
     } catch (e) {
       console.warn("Refresh user notice:", e);
+      throw e;
     }
   };
 
@@ -265,6 +259,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user,
         login,
         register,
+        loginAsDemo,
         loginWithWeb3,
         loginWithWeb3Auth,
         loginWithGoogle,

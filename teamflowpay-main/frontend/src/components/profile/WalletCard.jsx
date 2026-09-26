@@ -76,10 +76,11 @@ export default function WalletCard({
             className="px-3.5 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 text-xs font-semibold flex items-center gap-1.5 transition font-sans"
           >
             <Coins className="w-3.5 h-3.5" />
-            <span>Request +10,000 Test POL</span>
+            <span>Request test funds</span>
           </button>
         </div>
       </div>
     </div>
   );
 }
+

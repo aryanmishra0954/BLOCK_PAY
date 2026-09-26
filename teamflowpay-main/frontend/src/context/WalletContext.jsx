@@ -7,10 +7,10 @@ const WalletContext = createContext(null);
 export function WalletProvider({ children }) {
   const { user, refreshUser } = useAuth();
   const [balance, setBalance] = useState(() => {
-    return parseFloat(localStorage.getItem("walletBalance") || "10000.0000");
+    return parseFloat(localStorage.getItem("walletBalance") || "0.0000");
   });
   const [walletAddress, setWalletAddress] = useState(() => {
-    return localStorage.getItem("walletAddress") || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+    return localStorage.getItem("walletAddress") || "";
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -34,7 +34,7 @@ export function WalletProvider({ children }) {
       if (user) {
         await refreshUser();
       } else {
-        const stored = parseFloat(localStorage.getItem("walletBalance") || "10000.0000");
+        const stored = parseFloat(localStorage.getItem("walletBalance") || "0.0000");
         setBalance(stored);
       }
     } finally {
@@ -43,51 +43,25 @@ export function WalletProvider({ children }) {
   };
 
   const claimTestFunds = async (amount = 10000) => {
-    const newBal = balance + amount;
+    const res = await BlockPayAPI.transactions.fundTestBalance(amount);
+    const newBal = parseFloat(res.balance);
     setBalance(newBal);
     localStorage.setItem("walletBalance", newBal.toFixed(4));
-
-    const hash =
-      "0x" +
-      Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
-
-    try {
-      await BlockPayAPI.transactions.record({
-        type: "received",
-        amount: amount,
-        currency: "POL",
-        counterparty_address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        tx_hash: hash,
-        note: "Polygon Testnet Faucet Allocation",
-        status: "success",
-      });
-    } catch (err) {
-      console.warn("Backend faucet sync notice:", err);
-    }
-
-    return { success: true, amount, newBalance: newBal, hash };
+    return { success: true, amount, newBalance: newBal };
   };
 
   const sendTransaction = async ({ to, amount, currency = "POL", note = "" }) => {
     const numAmount = parseFloat(amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
+      throw new Error("Amount must be greater than 0 POL.");
+    }
     if (numAmount > balance) {
       throw new Error(`Insufficient balance. You have ${balance.toFixed(4)} POL`);
     }
 
-    const hash =
-      "0x" +
-      Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("");
+    const hash = `0x${crypto.randomUUID().replaceAll("-", "")}${crypto.randomUUID().replaceAll("-", "")}`;
 
-    const newBal = Math.max(0, balance - numAmount);
-    setBalance(newBal);
-    localStorage.setItem("walletBalance", newBal.toFixed(4));
-
-    try {
-      await BlockPayAPI.transactions.record({
+    const res = await BlockPayAPI.transactions.record({
         type: "sent",
         amount: numAmount,
         currency: currency,
@@ -95,10 +69,11 @@ export function WalletProvider({ children }) {
         tx_hash: hash,
         note: note || "Payment via BlockPay",
         status: "success",
+        mode: "internal",
       });
-    } catch (err) {
-      console.warn("Backend transaction sync notice:", err);
-    }
+    const newBal = parseFloat(res.new_balance);
+    setBalance(newBal);
+    localStorage.setItem("walletBalance", newBal.toFixed(4));
 
     return {
       hash,
@@ -189,10 +164,6 @@ export function WalletProvider({ children }) {
       throw new Error(`MetaMask broadcast error: ${txErr.message || "Unknown error"}`);
     }
 
-    const newBal = Math.max(0, balance - numAmount);
-    setBalance(newBal);
-    localStorage.setItem("walletBalance", newBal.toFixed(4));
-
     try {
       await BlockPayAPI.transactions.record({
         type: "sent",
@@ -202,9 +173,10 @@ export function WalletProvider({ children }) {
         tx_hash: realTxHash,
         note: note ? `${note} (On-Chain Amoy)` : "Polygon Amoy On-Chain Transfer",
         status: "success",
+        mode: "on_chain",
       });
     } catch (err) {
-      console.warn("Backend transaction record notice:", err);
+      throw new Error(`Broadcast succeeded, but BlockPay could not record the transaction. Keep this hash for reconciliation: ${realTxHash}`);
     }
 
     return {
@@ -212,7 +184,7 @@ export function WalletProvider({ children }) {
       amount: numAmount,
       currency: "POL",
       to,
-      newBalance: newBal,
+      newBalance: balance,
       isOnChain: true,
     };
   };

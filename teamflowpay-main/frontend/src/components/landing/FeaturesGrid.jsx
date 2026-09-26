@@ -38,7 +38,7 @@ export default function FeaturesGrid() {
     {
       icon: FileCheck2,
       title: "Transaction History",
-      desc: "Every transfer is permanently recorded with one-click links to Polygonscan and instant export to CSV for easy accounting.",
+      desc: "Every transfer is recorded in the BlockPay ledger; on-chain links appear only after a verified Polygon receipt.",
     },
   ];
 
@@ -82,3 +82,5 @@ export default function FeaturesGrid() {
     </section>
   );
 }
+
+

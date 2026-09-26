@@ -47,8 +47,8 @@ class AIService:
             "6. check_balance_reminders - parameters: none\n\n"
             "RULES:\n"
             "- Always respond with VALID JSON only (no markdown fences, no explanatory text)\n"
-            "- For payments, always extract vendor and amount\n"
-            "- Default currency is POL if not specified\n\n"
+            "- For payments, extract vendor and amount; never invent missing values\n"
+            "- Default currency is POL only when a payment amount and recipient are present\n\n"
             "Response format:\n"
             '{\n  "action": "create_payment",\n  "parameters": {\n    "vendor": "Aryan",\n    "amount": 50,\n    "currency": "POL",\n    "description": "Payment to Aryan"\n  }\n}\n'
         )
@@ -83,20 +83,23 @@ class AIService:
                 }
             }
 
-        amt = 50.0
-        amt_match = re.search(r'(?:of\s+|[$€£₹]?\s*)(\d+(?:\.\d+)?)', prompt, re.IGNORECASE)
+        if not any(w in p for w in ["send", "pay", "transfer", "payment"]):
+            return {"action": "unsupported", "parameters": {}, "message": "I can only process supported BlockPay commands."}
+
+        amt = None
+        amt_match = re.search(r'(?:\b(?:send|pay|transfer)\s+|\bof\s+|[$€£₹]\s*)(-?\d+(?:\.\d+)?)\b', prompt, re.IGNORECASE)
         if amt_match:
             try:
                 amt = float(amt_match.group(1))
             except ValueError:
-                amt = 50.0
+                amt = None
 
         curr = "POL"
         curr_match = re.search(r'\b(POL|MATIC|ETH|BTC|USD|EUR|INR)\b', prompt, re.IGNORECASE)
         if curr_match:
             curr = curr_match.group(1).upper()
 
-        recipient = "Aryan"
+        recipient = None
         to_match = re.search(r'(?:to|for)\s+([0-9a-zA-Z._-]+)', prompt, re.IGNORECASE)
         if to_match:
             recipient = to_match.group(1).strip()
@@ -104,6 +107,12 @@ class AIService:
             addr_match = re.search(r'(0x[a-fA-F0-9]{40})', prompt)
             if addr_match:
                 recipient = addr_match.group(1)
+
+        if amt is None or not recipient:
+            return {"action": "create_payment", "parameters": {
+                "vendor": recipient or "", "recipient": recipient or "", "amount": amt,
+                "currency": curr, "description": ""
+            }}
 
         return {
             "action": "create_payment",
@@ -182,3 +191,4 @@ class AIService:
         return parsed
 
 ai_service = AIService()
+

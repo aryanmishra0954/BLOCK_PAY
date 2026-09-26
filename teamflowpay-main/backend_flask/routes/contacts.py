@@ -28,47 +28,7 @@ def _get_token_from_request():
 
 def _resolve_user():
     token = _get_token_from_request()
-    user = get_user_by_token(token) if token else None
-    if not user:
-        body = request.get_json(silent=True) or {}
-        email = (
-            request.args.get("email")
-            or request.headers.get("X-User-Email")
-            or body.get("user_email")
-            or body.get("email_user")
-            or body.get("email")
-        )
-        if email:
-            user = get_user_by_email(email)
-            if not user:
-                user = create_user(
-                    email=email,
-                    password_hash="guest_auto_provision",
-                    full_name=email.split("@")[0],
-                    wallet_address=request.headers.get("X-Wallet-Address") or body.get("wallet_address") or "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-                    initial_balance=10000.0,
-                )
-    if not user:
-        wallet = (
-            request.headers.get("X-Wallet-Address")
-            or request.args.get("wallet")
-            or (request.get_json(silent=True) or {}).get("wallet_address")
-        )
-        if wallet:
-            user = get_user_by_wallet(wallet)
-            if not user:
-                user = create_web3_user(wallet)
-    if not user:
-        user = get_user_by_email("trader@blockpay.io")
-        if not user:
-            user = create_user(
-                email="trader@blockpay.io",
-                password_hash="guest_auto_provision",
-                full_name="BlockPay Trader",
-                wallet_address="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-                initial_balance=10000.0,
-            )
-    return user
+    return get_user_by_token(token) if token else None
 
 def _is_valid_eth_address(address: str) -> bool:
     if not address or not isinstance(address, str):

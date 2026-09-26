@@ -10,6 +10,7 @@ The app is also exposed as ``app`` for WSGI / Vercel deployment.
 
 import sys
 import os
+import sqlite3
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request
@@ -43,15 +44,11 @@ def create_app() -> Flask:
             return response
         if (
             origin in allowed_origins
-            or origin == "null"
-            or origin.startswith("http://localhost:")
-            or origin.startswith("http://127.0.0.1:")
-            or origin.endswith(".vercel.app")
         ):
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, Authorization"
+                "Content-Type, Authorization, X-User-Email, X-Wallet-Address, X-Auth-Token"
             )
             response.headers["Access-Control-Allow-Methods"] = (
                 "GET, POST, PUT, DELETE, OPTIONS"
@@ -116,7 +113,7 @@ def create_app() -> Flask:
         return jsonify({
             "success": False,
             "error": "Internal server error",
-            "message": str(error) if Config.DEBUG else None,
+            "message": None,
         }), 500
 
     return application
@@ -130,3 +127,4 @@ if __name__ == "__main__":
     print(f"[+] AI Command API: http://localhost:{port}/api/agent/command")
     print(f"[+] Execute API: http://localhost:{port}/api/agent/execute\n")
     app.run(host="0.0.0.0", port=port, debug=Config.DEBUG)
+

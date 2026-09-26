@@ -36,10 +36,10 @@ def run_tests():
     reg_data = reg_res.get_json()
     assert reg_data["success"] is True
     assert reg_data["user"]["email"] == test_email
-    assert reg_data["user"]["balance"] == 10000.0
+    assert reg_data["user"]["balance"] == 0.0
     assert reg_data["user"]["auth_provider"] == "email"
     token = reg_data["token"]
-    print("[PASS] Email registration successful (seeded 10,000 POL)")
+    print("[PASS] Email registration successful (starts at zero balance)")
 
     login_res = client.post("/api/auth/login", json={
         "email": test_email,
@@ -75,10 +75,10 @@ def run_tests():
     web3_data = web3_verify_res.get_json()
     assert web3_data["success"] is True
     assert web3_data["user"]["wallet_address"].lower() == wallet_address.lower()
-    assert web3_data["user"]["balance"] == 10000.0
+    assert web3_data["user"]["balance"] == 0.0
     assert web3_data["user"]["auth_provider"] == "web3"
     web3_token = web3_data["token"]
-    print("[PASS] Web3 signature cryptographically verified! Session issued with 10,000 POL")
+    print("[PASS] Web3 signature cryptographically verified! Session issued with zero initial balance")
 
     replay_res = client.post("/api/auth/web3/verify", json={
         "address": wallet_address,
@@ -100,14 +100,8 @@ def run_tests():
         "google_id": google_id,
         "picture": google_avatar,
     })
-    assert google_res.status_code == 200, f"Google verify failed: {google_res.get_json()}"
-    google_data = google_res.get_json()
-    assert google_data["success"] is True
-    assert google_data["user"]["email"] == google_email
-    assert google_data["user"]["auth_provider"] == "google"
-    assert google_data["user"]["avatar_url"] == google_avatar
-    assert google_data["user"]["balance"] == 10000.0
-    print("[PASS] Google OAuth user onboarded and verified successfully")
+    assert google_res.status_code == 401, "Unsigned Google profile data was accepted"
+    print("[PASS] Unsigned Google profile data correctly rejected; signed ID-token verification is required")
 
     print("\n[Test 4] Testing Session Verification (/api/auth/me)...")
     me_res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {web3_token}"})
@@ -122,3 +116,4 @@ def run_tests():
 
 if __name__ == "__main__":
     run_tests()
+

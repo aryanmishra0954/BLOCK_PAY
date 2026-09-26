@@ -47,7 +47,7 @@ export default function TxSuccessModal({
           {isOnChain ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              Verified On-Chain • Polygon Amoy
+              Broadcasted • Awaiting Polygon receipt
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">

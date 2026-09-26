@@ -69,7 +69,11 @@ export default function HistoryPage() {
       const q = searchQuery.toLowerCase();
       const addr = (tx.counterparty_address || tx.address || "").toLowerCase();
       const hash = (tx.tx_hash || tx.hash || "").toLowerCase();
-      if (!addr.includes(q) && !hash.includes(q)) return false;
+      const name = (tx.counterparty_name || "").toLowerCase();
+      const note = (tx.note || "").toLowerCase();
+      const amt = String(tx.amount || "");
+      const curr = (tx.currency || "").toLowerCase();
+      if (!addr.includes(q) && !hash.includes(q) && !name.includes(q) && !note.includes(q) && !amt.includes(q) && !curr.includes(q)) return false;
     }
 
     return true;

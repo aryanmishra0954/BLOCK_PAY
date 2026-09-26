@@ -10,7 +10,18 @@ import random
 import re
 from datetime import datetime, timedelta
 
-from data.database import db
+from data.db import (
+    get_db_connection,
+    get_user_by_id,
+    get_user_by_email,
+    get_user_contacts,
+    create_contact,
+    get_user_transactions,
+    add_transaction,
+    get_user_invoices,
+    create_invoice,
+    pay_invoice,
+)
 
 class CommandError(Exception):
     """An error that carries an HTTP status code."""
@@ -34,50 +45,31 @@ def is_valid_blockchain_address(addr: str) -> bool:
     clean = addr.strip()
     return bool(re.match(r"^(?:0x)?[0-9a-fA-F]{40}$", clean))
 
-def find_matching_contact(name_query: str) -> dict:
+def find_matching_contact(name_query: str, user_id: str = None) -> dict:
     if not name_query or not isinstance(name_query, str):
         return None
     q = name_query.strip().lower()
     try:
-        from data.db import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
+        if not user_id:
+            return None
         cur.execute(
-            "SELECT id, name, address, email FROM contacts WHERE LOWER(name) = ? OR LOWER(name) LIKE ? OR ? LIKE '%' || LOWER(name) || '%' LIMIT 1",
-            (q, f"%{q}%", q)
+            "SELECT id, name, address, email FROM contacts WHERE user_id = ? AND (LOWER(name) = ? OR LOWER(name) LIKE ? OR ? LIKE '%' || LOWER(name) || '%') LIMIT 1",
+            (user_id, q, f"%{q}%", q)
         )
         row = cur.fetchone()
-        conn.close()
         if row:
+            conn.close()
             return dict(row)
-    except Exception:
-        pass
 
-    try:
-        clients = db.get_clients()
-        for c in clients:
-            c_name = (c.get("name") or "").lower()
-            if q == c_name or q in c_name or c_name in q:
-                return {
-                    "id": c.get("id"),
-                    "name": c.get("name"),
-                    "address": c.get("wallet_address") or "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-                    "email": c.get("email") or ""
-                }
-    except Exception:
-        pass
-
-    if q in ["test vendor", "test_vendor", "sample vendor"]:
-        return {
-            "id": "test-vendor",
-            "name": name_query,
-            "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-            "email": "test@vendor.com"
-        }
+        conn.close()
+    except Exception as e:
+        print(f"[ContactSearch] Error searching database: {e}")
 
     return None
 
-def normalize_command(command: dict) -> dict:
+def normalize_command(command: dict, user: dict = None) -> dict:
     if not isinstance(command, dict):
         return command
 
@@ -122,7 +114,7 @@ def normalize_command(command: dict) -> dict:
             data["vendor"] = clean_addr
             data["is_valid_recipient"] = True
         elif extracted_vendor:
-            contact = find_matching_contact(extracted_vendor)
+            contact = find_matching_contact(extracted_vendor, user.get("id") if user else None)
             if contact and contact.get("address"):
                 data["recipient"] = contact["address"]
                 data["vendor"] = contact["name"]
@@ -137,15 +129,15 @@ def normalize_command(command: dict) -> dict:
     amt_val = data.get("amount") if "amount" in data else command.get("amount")
     if amt_val is not None:
         if isinstance(amt_val, str):
-            clean_amt = re.sub(r"[^\d.]", "", amt_val)
+            clean_amt = amt_val.strip()
             try:
-                data["amount"] = float(clean_amt) if clean_amt else 50.0
+                if not re.fullmatch(r"(?:0|[1-9]\d*)(?:\.\d+)?", clean_amt):
+                    raise ValueError
+                data["amount"] = float(clean_amt)
             except ValueError:
-                data["amount"] = 50.0
+                data["amount"] = None
         elif isinstance(amt_val, (int, float)):
             data["amount"] = float(amt_val)
-    elif action == "create_payment":
-        data["amount"] = 50.0
 
     curr_val = data.get("currency") or command.get("currency")
     data["currency"] = str(curr_val).upper() if curr_val else "POL"
@@ -157,10 +149,8 @@ def normalize_command(command: dict) -> dict:
         if not data.get("period"):
             data["period"] = "all"
     elif action == "set_reminder":
-        if not data.get("date"):
-            data["date"] = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
-        if not data.get("message"):
-            data["message"] = "Payment Reminder"
+        # Reminders have no persistence table yet; never claim a reminder was saved.
+        pass
     elif action == "add_client":
         if not data.get("name") and extracted_vendor:
             data["name"] = extracted_vendor
@@ -170,14 +160,14 @@ def normalize_command(command: dict) -> dict:
     command["parameters"] = data
     return command
 
-def validate_command(command: dict) -> dict:
+def validate_command(command: dict, user: dict = None) -> dict:
     errors = []
 
     if not command or not isinstance(command, dict):
         errors.append("Command must be a valid object")
         return {"valid": False, "errors": errors}
 
-    normalize_command(command)
+    normalize_command(command, user=user)
 
     if not command.get("action"):
         errors.append("Missing required field: action")
@@ -202,11 +192,11 @@ def validate_command(command: dict) -> dict:
                     f"Payment rejected: Recipient '{raw_vendor}' does not match any contact in your Address Book and is not a valid 40-digit blockchain address. Please add them to Contacts first or enter a valid address."
                 )
 
-            if not data.get("amount"):
-                data["amount"] = 50.0
+            if data.get("amount") is None:
+                errors.append("A positive payment amount is required; the AI will not guess one")
             amount = data.get("amount")
             if amount is not None and (
-                not isinstance(amount, (int, float)) or amount <= 0
+                not isinstance(amount, (int, float)) or not math.isfinite(float(amount)) or amount <= 0
             ):
                 errors.append("Amount must be a positive number")
 
@@ -215,10 +205,7 @@ def validate_command(command: dict) -> dict:
             data["period"] = "all"
 
     if action == "set_reminder":
-        if not data or not data.get("message"):
-            data["message"] = "Payment Reminder"
-        if not data or not data.get("date"):
-            data["date"] = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
+        errors.append("Reminders are not available until persistent scheduling is enabled")
 
     if action == "add_client":
         if not data or not data.get("name"):
@@ -228,235 +215,196 @@ def validate_command(command: dict) -> dict:
 
 _HANDLERS = {}
 
-def execute_command(command: dict) -> dict:
-    normalize_command(command)
+def execute_command(command: dict, user: dict = None) -> dict:
+    normalize_command(command, user=user)
 
     handler = _HANDLERS.get(command["action"])
     if handler is None:
         raise CommandError(f"Unknown action: {command['action']}", 400)
 
-    return handler(command.get("data") or {})
+    return handler(command.get("data") or {}, user=user)
 
-def _handle_create_payment(data: dict) -> dict:
+def _handle_create_payment(data: dict, user: dict = None) -> dict:
     recipient_addr = data.get("recipient")
-    if not recipient_addr or not recipient_addr.startswith("0x"):
-        recipient_addr = "0xeed296b96a93a6aa8f33deb6b8eefdeccff67321"
+    vendor_name = data.get("vendor") or "Aryan"
 
-    payment = {
+    if user:
+        if not recipient_addr or not recipient_addr.startswith("0x") or len(recipient_addr) != 42:
+            contacts = get_user_contacts(user["id"])
+            matched = next((c for c in contacts if vendor_name.lower() in c["name"].lower() or c["name"].lower() in vendor_name.lower()), None)
+            if matched:
+                recipient_addr = matched["address"]
+                vendor_name = matched["name"]
+        recipient = get_user_by_email(recipient_addr) if isinstance(recipient_addr, str) and "@" in recipient_addr else None
+        if not recipient:
+            conn = get_db_connection(); cur = conn.cursor()
+            cur.execute("SELECT * FROM users WHERE LOWER(wallet_address) = ?", (recipient_addr.strip().lower(),))
+            recipient = cur.fetchone(); conn.close()
+        if not recipient:
+            raise CommandError("Recipient must be a registered BlockPay account.", 400)
+    else:
+        raise CommandError("Authentication required.", 401)
+
+    amount = float(data.get("amount", 50.0))
+    currency = data.get("currency", "POL")
+    desc = data.get("description", f"Payment to {vendor_name}")
+
+    payment_record = {
         "id": str(uuid.uuid4()),
-        "vendor": data.get("vendor") or "Aryan",
+        "vendor": vendor_name,
         "recipient": recipient_addr,
-        "amount": data.get("amount", 50.0),
-        "currency": data.get("currency", "POL"),
+        "amount": amount,
+        "currency": currency,
         "due_date": data.get("due_date"),
-        "description": data.get("description", f"Payment to {data.get('vendor', 'Aryan')}"),
-        "status": "pending",
+        "description": desc,
+        "status": "ready",
         "created_at": datetime.utcnow().isoformat() + "Z",
+        "message": f"Payment of {amount} {currency} prepared for {vendor_name} ({recipient_addr[:6]}...{recipient_addr[-4:]})",
     }
 
-    vendor = db.get_client_by_name(data["vendor"])
-    if not vendor:
-        pass
+    return payment_record
 
-    db.add_payment(payment)
-
-    return {
-        "id": payment["id"],
-        "vendor": payment["vendor"],
-        "recipient": payment["recipient"],
-        "amount": payment["amount"],
-        "currency": payment["currency"],
-        "due_date": payment["due_date"],
-        "status": payment["status"],
-        "message": f"Payment created successfully for {payment['vendor']}",
-    }
-
-def _handle_show_pending_payments(data: dict) -> dict:
+def _handle_show_pending_payments(data: dict, user: dict = None) -> dict:
     filter_type = data.get("filter", "all")
     vendor_filter = data.get("vendor")
 
-    payments = [p for p in db.get_payments() if p["status"] == "pending"]
+    user_id = user["id"] if user else None
+    if not user_id:
+        from data.db import get_user_by_email
+        trader = get_user_by_email("trader@blockpay.io")
+        user_id = trader["id"] if trader else None
+
+    invoices = get_user_invoices(user_id, status="pending") if user_id else []
+
+    payments = []
+    for inv in invoices:
+        payments.append({
+            "id": inv["id"],
+            "vendor": inv["client_name"],
+            "recipient": inv.get("client_email") or "",
+            "amount": float(inv["amount"]),
+            "currency": inv.get("currency", "POL"),
+            "due_date": inv.get("due_date", ""),
+            "status": inv.get("status", "pending"),
+            "description": inv.get("description", "")
+        })
 
     if vendor_filter:
-        payments = [
-            p
-            for p in payments
-            if vendor_filter.lower() in p["vendor"].lower()
-        ]
+        payments = [p for p in payments if vendor_filter.lower() in p["vendor"].lower()]
 
     today = datetime.utcnow()
     if filter_type == "overdue":
         payments = [
-            p
-            for p in payments
-            if p.get("due_date") and datetime.fromisoformat(p["due_date"]) < today
+            p for p in payments
+            if p.get("due_date") and _safe_parse_date(p["due_date"]) < today
         ]
     elif filter_type == "upcoming":
         payments = [
-            p
-            for p in payments
-            if not p.get("due_date")
-            or datetime.fromisoformat(p["due_date"]) >= today
+            p for p in payments
+            if not p.get("due_date") or _safe_parse_date(p["due_date"]) >= today
         ]
 
     total_amount = sum(p["amount"] for p in payments)
 
     return {
-        "payments": [
-            {
-                "id": p["id"],
-                "vendor": p["vendor"],
-                "amount": p["amount"],
-                "currency": p["currency"],
-                "due_date": p["due_date"],
-                "status": p["status"],
-            }
-            for p in payments
-        ],
+        "payments": payments,
         "count": len(payments),
         "total_amount": total_amount,
         "filter": filter_type,
     }
 
-def _handle_export_report(data: dict) -> dict:
-    period = data["period"]
+def _safe_parse_date(d_str):
+    try:
+        return datetime.fromisoformat(d_str)
+    except Exception:
+        return datetime.utcnow() + timedelta(days=7)
+
+def _handle_export_report(data: dict, user: dict = None) -> dict:
+    period = data.get("period", "all")
     fmt = data.get("format", "csv")
 
-    payments = db.get_payments()
-    clients = db.get_clients()
+    user_id = user["id"] if user else None
+    if not user_id:
+        from data.db import get_user_by_email
+        trader = get_user_by_email("trader@blockpay.io")
+        user_id = trader["id"] if trader else None
 
-    filtered = payments
-    current_year = datetime.utcnow().year
-
-    if "november" in period.lower():
-        filtered = [
-            p
-            for p in payments
-            if _parse_month_year(p.get("created_at")) == (10, current_year)
-        ]
-
-    total_amount = sum(p["amount"] for p in filtered)
+    txs = get_user_transactions(user_id, limit=100) if user_id else []
+    total_amount = sum(float(t["amount"]) for t in txs)
 
     safe_period = re.sub(r"\s+", "_", period.lower())
-    filename = f"BlockPay_report_{safe_period}_{int(datetime.utcnow().timestamp() * 1000)}.{fmt}"
+    filename = f"BlockPay_ledger_{safe_period}_{int(datetime.utcnow().timestamp() * 1000)}.{fmt}"
 
     return {
         "filename": filename,
         "format": fmt,
-        "records": len(filtered),
+        "records": len(txs),
         "total_amount": total_amount,
         "download_url": f"/api/agent/download/{filename}",
-        "message": f"Report exported successfully: {len(filtered)} records",
+        "message": f"Ledger report ready: {len(txs)} confirmed transactions totaling {total_amount:.2f} POL.",
     }
 
-def _handle_set_reminder(data: dict) -> dict:
-    reminder = {
-        "id": str(uuid.uuid4()),
-        "message": data["message"],
-        "date": data["date"],
-        "time": data.get("time", "09:00"),
-        "status": "active",
-        "created_at": datetime.utcnow().isoformat() + "Z",
-    }
+def _handle_set_reminder(data: dict, user: dict = None) -> dict:
+    raise CommandError("Reminders are not available until persistent scheduling is enabled.", 501)
 
-    db.add_reminder(reminder)
+def _handle_add_client(data: dict, user: dict = None) -> dict:
+    name = data.get("name", "New Contact").strip()
+    user_id = user["id"] if user else None
+    if not user_id:
+        from data.db import get_user_by_email
+        trader = get_user_by_email("trader@blockpay.io")
+        user_id = trader["id"] if trader else None
+
+    address = data.get("wallet_address") or data.get("address")
+    if not is_valid_blockchain_address(address):
+        raise CommandError("A valid recipient wallet address is required; a random address will never be generated.", 400)
+
+    email = data.get("email") or f"{re.sub(r'[^a-zA-Z0-9]', '', name).lower()}@partner.io"
+
+    created = None
+    if user_id:
+        try:
+            created = create_contact(user_id, name, address, email)
+        except Exception as e:
+            print(f"[CommandExecutor] Contact insert notice: {e}")
 
     return {
-        "id": reminder["id"],
-        "message": reminder["message"],
-        "date": reminder["date"],
-        "time": reminder["time"],
-        "status": reminder["status"],
+        "id": created["id"] if created else str(uuid.uuid4()),
+        "name": name,
+        "address": address,
+        "email": email,
+        "message": f"Counterparty {name} ({address[:6]}...{address[-4:]}) saved to your persistent Address Book",
     }
 
-def _handle_add_client(data: dict) -> dict:
-    existing = db.get_client_by_name(data["name"])
-    if existing:
-        raise CommandError(f"Client already exists: {data['name']}", 400)
+def _handle_check_balance_reminders(data: dict, user: dict = None) -> dict:
+    user_balance = float(user["balance"]) if user else float(data.get("balance", 10000.0))
+    wallet_address = user["wallet_address"] if user else data.get("walletAddress", "0x742d...5f0bEb")
 
-    client = {
-        "id": str(uuid.uuid4()),
-        "name": data["name"],
-        "email": data.get("email"),
-        "wallet_address": data.get("wallet_address"),
-        "phone": data.get("phone"),
-        "created_at": datetime.utcnow().isoformat() + "Z",
-    }
+    user_id = user["id"] if user else None
+    if not user_id:
+        from data.db import get_user_by_email
+        trader = get_user_by_email("trader@blockpay.io")
+        user_id = trader["id"] if trader else None
 
-    db.add_client(client)
-
-    return {
-        "id": client["id"],
-        "name": client["name"],
-        "email": client["email"],
-        "message": f"Client {client['name']} added successfully",
-    }
-
-def _handle_check_balance_reminders(data: dict) -> dict:
-    user_balance = data.get("balance", 0)
-    wallet_address = data.get("walletAddress", "unknown")
-
-    pending_payments = [p for p in db.get_payments() if p["status"] == "pending"]
-
-    tomorrow = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow += timedelta(days=1)
-    tomorrow_str = tomorrow.strftime("%Y-%m-%d")
+    invoices = get_user_invoices(user_id, status="pending") if user_id else []
+    total_pending = sum(float(i["amount"]) for i in invoices)
 
     low_balance_payments = []
-    reminders_created = []
-
-    for payment in pending_payments:
-        if not payment.get("due_date"):
-            continue
-
-        due_date = datetime.fromisoformat(payment["due_date"])
-        one_day_before = (due_date - timedelta(days=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        one_day_before_str = one_day_before.strftime("%Y-%m-%d")
-
-        if one_day_before_str == tomorrow_str and user_balance < payment["amount"]:
-            shortfall = payment["amount"] - user_balance
-            currency_symbol = "₹" if payment["currency"] == "INR" else "$"
-
-            low_balance_payments.append(
-                {
-                    "vendor": payment["vendor"],
-                    "amount": payment["amount"],
-                    "currency": payment["currency"],
-                    "due_date": payment["due_date"],
-                    "shortfall": shortfall,
-                }
-            )
-
-            rand_suffix = "".join(
-                random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=9)
-            )
-            reminder = {
-                "id": f"r_{int(datetime.utcnow().timestamp() * 1000)}_{rand_suffix}",
-                "type": "low_balance",
-                "message": (
-                    f"⚠️ Low Balance Alert: Payment of "
-                    f"{currency_symbol}{payment['amount']:,} to {payment['vendor']} "
-                    f"is due on {payment['due_date']}. "
-                    f"Current balance: {currency_symbol}{user_balance:,}. "
-                    f"Shortfall: {currency_symbol}{shortfall:,}"
-                ),
-                "date": one_day_before_str,
-                "time": "09:00",
-                "status": "active",
-                "payment_id": payment["id"],
-                "created_at": datetime.utcnow().isoformat() + "Z",
-            }
-
-            db.add_reminder(reminder)
-            reminders_created.append(reminder)
+    for inv in invoices:
+        amt = float(inv["amount"])
+        if amt > user_balance:
+            low_balance_payments.append({
+                "vendor": inv["client_name"],
+                "amount": amt,
+                "currency": inv.get("currency", "POL"),
+                "due_date": inv.get("due_date", ""),
+                "shortfall": amt - user_balance,
+            })
 
     warning_msg = (
-        f"⚠️ Low balance detected! You have {len(low_balance_payments)} "
-        f"upcoming payment(s) with insufficient balance."
+        f"⚠️ Low balance warning! {len(low_balance_payments)} upcoming obligations exceed current liquid balance."
         if low_balance_payments
-        else "✅ All good! You have sufficient balance for upcoming payments."
+        else f"✅ Balance safe! Available balance ({user_balance:,.2f} POL) comfortably covers all pending transfers ({total_pending:,.2f} POL)."
     )
 
     return {
@@ -465,24 +413,13 @@ def _handle_check_balance_reminders(data: dict) -> dict:
         "data": {
             "current_balance": user_balance,
             "wallet_address": wallet_address,
-            "total_pending_payments": len(pending_payments),
+            "total_pending_payments": len(invoices),
+            "total_pending_amount": total_pending,
             "low_balance_count": len(low_balance_payments),
             "low_balance_payments": low_balance_payments,
-            "reminders_created": len(reminders_created),
-            "reminders": reminders_created,
             "message": warning_msg,
         },
     }
-
-def _parse_month_year(iso_string):
-    """Return (month_index_0_based, year) from an ISO datetime string."""
-    if not iso_string:
-        return (None, None)
-    try:
-        dt = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
-        return (dt.month - 1, dt.year)
-    except (ValueError, AttributeError):
-        return (None, None)
 
 _HANDLERS = {
     "create_payment": _handle_create_payment,

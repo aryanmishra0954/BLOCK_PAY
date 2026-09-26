@@ -24,7 +24,7 @@ export default function HeroSection({ onGetStarted, isAuthenticated }) {
               onClick={onGetStarted}
               className="w-full sm:w-auto btn-primary px-7 py-3.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 shadow-sm"
             >
-              <span>{isAuthenticated ? "Open Dashboard" : "Get Started (Free 10,000 Test POL)"}</span>
+              <span>{isAuthenticated ? "Open Dashboard" : "Get Started"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
             <a
@@ -58,3 +58,4 @@ export default function HeroSection({ onGetStarted, isAuthenticated }) {
     </section>
   );
 }
+
