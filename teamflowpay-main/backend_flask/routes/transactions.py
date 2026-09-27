@@ -57,6 +57,8 @@ def get_transactions():
 @transactions_bp.route("", methods=["POST"])
 @transactions_bp.route("/", methods=["POST"])
 def record_transaction():
+    return jsonify(success=False, error="Internal transfers have been retired. Use the Amoy wallet payment flow."), 410
+
     user = _resolve_user()
     if not user:
         return jsonify({"success": False, "error": "Authentication required."}), 401
@@ -103,10 +105,7 @@ def record_transaction():
             sender, _recipient, tx_id = transfer_between_users(user["id"], counterparty_address, amount, tx_hash, currency, note)
             tx = get_user_transactions(user["id"], limit=1)[0]
         elif mode == "on_chain":
-            tx = add_transaction(user_id=user["id"], tx_type="sent", amount=amount,
-                counterparty_address=counterparty_address, counterparty_name=counterparty_name,
-                tx_hash=tx_hash, currency=currency, note=note, status="submitted")
-            sender = get_user_by_id(user["id"])
+            return jsonify({"success": False, "error": "BlockPay test funds support internal transfers only."}), 400
         else:
             return jsonify({"success": False, "error": "Unsupported transfer mode."}), 400
     except (ValueError, LookupError) as exc:
@@ -122,6 +121,8 @@ def record_transaction():
 
 @transactions_bp.route("/fund", methods=["POST"])
 def fund_test_balance():
+    return jsonify(success=False, error="Simulated funding has been retired. Obtain Amoy test POL from a faucet."), 410
+
     user = _resolve_user()
     if not user:
         return jsonify({"success": False, "error": "Authentication required."}), 401
@@ -169,6 +170,8 @@ def record_invoice():
 
 @transactions_bp.route("/invoices/<invoice_id>/pay", methods=["POST"])
 def pay_invoice_route(invoice_id):
+    return jsonify(success=False,error="Database invoice settlement is retired. Pay through the testnet send flow; invoice reconciliation is not yet supported."), 410
+
     user = _resolve_user()
     if not user:
         return jsonify({"success": False, "error": "Authentication required."}), 401

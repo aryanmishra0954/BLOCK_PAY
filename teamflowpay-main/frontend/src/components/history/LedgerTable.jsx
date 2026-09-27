@@ -36,10 +36,12 @@ export default function LedgerTable({
             Pending
           </span>
         );
+      case "failed":
+        return <span className="text-rose-400">Failed — network fee may apply</span>;
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium border border-[#262b36] bg-[#161920] text-zinc-300 font-sans">
-            Confirmed
+            Unknown
           </span>
         );
     }

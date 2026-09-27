@@ -8,6 +8,8 @@ import LedgerFilters from "../components/history/LedgerFilters";
 import LedgerTable from "../components/history/LedgerTable";
 
 export default function HistoryPage() {
+  const [error, setError] = useState("");
+  const [importHash, setImportHash] = useState("");
   const [allTransactions, setAllTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -25,9 +27,10 @@ export default function HistoryPage() {
       const res = await BlockPayAPI.transactions.getAll(150);
       if (res && res.transactions) {
         setAllTransactions(res.transactions);
+        setError((res.warnings || []).join(" "));
       }
     } catch (err) {
-      console.warn("Ledger loading notice:", err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -35,6 +38,8 @@ export default function HistoryPage() {
 
   useEffect(() => {
     loadLedger();
+    const timer = setInterval(loadLedger, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleRefresh = async () => {
@@ -81,13 +86,13 @@ export default function HistoryPage() {
 
   const totalEntries = allTransactions.length;
   const grossOutflow = allTransactions
-    .filter((t) => t.type === "sent")
+    .filter((t) => t.type === "sent" && t.status === "success")
     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   const grossInflow = allTransactions
-    .filter((t) => t.type === "received")
+    .filter((t) => t.type === "received" && t.status === "success")
     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   const gasConsumed = (
-    allTransactions.filter((t) => t.type === "sent").length * 0.0021
+    allTransactions.filter(t => t.type === "sent").reduce((sum, t) => sum + (Number(t.fee) || 0), 0)
   ).toFixed(4);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -112,6 +117,11 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
+      {error && <p role="alert" className="text-amber-300">{error}</p>}
+      <form className="flex gap-2" onSubmit={async e => {e.preventDefault();try{await BlockPayAPI.chain.record(importHash.trim());setImportHash('');await loadLedger();}catch(err){setError(err.message);}}}>
+        <input aria-label="Import transaction hash" placeholder="Import an external or missing Amoy transaction hash" value={importHash} onChange={e=>setImportHash(e.target.value)} className="bg-zinc-900 border border-zinc-700 p-3 rounded flex-1" required />
+        <button className="btn-secondary px-4">Verify and import</button>
+      </form>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
@@ -125,7 +135,7 @@ export default function HistoryPage() {
               Transaction History
             </h1>
             <p className="text-xs text-zinc-400 font-sans">
-              Complete record of payments sent and received on Polygon Amoy
+              Amoy transfers recorded in BlockPay. Import external transfers by hash.
             </p>
           </div>
         </div>

@@ -67,6 +67,9 @@ def command():
             "data": result,
         })
 
+    except CommandError as exc:
+        return jsonify({"success": False, "error": str(exc)}), exc.status_code
+
     except Exception as exc:
         print(f"[ERR] Command processing error: {exc}")
         return jsonify({

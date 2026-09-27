@@ -8,15 +8,15 @@ export default function HeroSection({ onGetStarted, isAuthenticated }) {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#13161c] border border-[#232731] text-[11px] font-mono text-zinc-400 mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <span className="uppercase tracking-wider">Polygon Amoy Network • Instant Crypto Payments</span>
+            <span className="uppercase tracking-wider">Polygon Amoy • Testnet Payments</span>
           </div>
 
           <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6 text-white">
-            Send and Receive Crypto Payments in Seconds.
+            Send and Receive Payments on a Blockchain Testnet.
           </h1>
 
           <p className="font-sans text-base sm:text-lg text-zinc-400 font-normal leading-relaxed max-w-2xl mx-auto mb-10">
-            BlockPay lets you send, receive, and manage crypto payments with natural language commands, ultra-low fees, and non-custodial security on Polygon.
+            Connect your wallet, prepare payments, and verify transfers on Polygon Amoy. Test tokens only; no real money.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-16">
@@ -37,20 +37,20 @@ export default function HeroSection({ onGetStarted, isAuthenticated }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-10 border-t border-[#1f232b] text-center">
             <div>
-              <p className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">2.1s</p>
-              <p className="text-xs text-zinc-400 font-sans mt-1">Transfer Speed</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">Amoy</p>
+              <p className="text-xs text-zinc-400 font-sans mt-1">Test Network</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono tracking-tight">&lt; $0.001</p>
-              <p className="text-xs text-zinc-400 font-sans mt-1">Average Fee</p>
+              <p className="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono tracking-tight">Variable</p>
+              <p className="text-xs text-zinc-400 font-sans mt-1">Wallet Network Fee</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">100%</p>
-              <p className="text-xs text-zinc-400 font-sans mt-1">You Control Keys</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">Wallet</p>
+              <p className="text-xs text-zinc-400 font-sans mt-1">You Approve Payments</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">Live FX</p>
-              <p className="text-xs text-zinc-400 font-sans mt-1">Real-Time Currency Rates</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">History</p>
+              <p className="text-xs text-zinc-400 font-sans mt-1">Verified Network Receipts</p>
             </div>
           </div>
         </div>

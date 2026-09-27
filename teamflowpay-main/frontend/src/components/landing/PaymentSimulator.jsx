@@ -8,25 +8,8 @@ export default function PaymentSimulator() {
     "Send 50 POL to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e for office supplies"
   );
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simOutput, setSimOutput] = useState(
-    JSON.stringify(
-      {
-        status: "ready_to_send",
-        network: "Polygon Amoy",
-        payment: {
-          recipient: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-          amount: 50.0,
-          currency: "POL",
-          estimated_fee: "0.0021 POL (~$0.0009)",
-          balance_check: "passed",
-        },
-        action: "Transfer prepared for your approval",
-      },
-      null,
-      2
-    )
-  );
-  const [latencyText, setLatencyText] = useState("Status: Ready • 28ms");
+  const [simOutput, setSimOutput] = useState(JSON.stringify({status:"example_only", message:"This landing demo does not check balances or submit transactions. Sign in and connect a wallet for actual testnet payments."},null,2));
+  const [latencyText, setLatencyText] = useState("Illustrative example — no payment submitted");
 
   const presetScenarios = [
     {
@@ -43,56 +26,9 @@ export default function PaymentSimulator() {
     },
   ];
 
-  const handleSimulate = async () => {
-    if (!instruction.trim() || isSimulating) return;
-    setIsSimulating(true);
-    setLatencyText("Processing request...");
-    const start = performance.now();
-
-    try {
-      if (!isAuthenticated) {
-        setLatencyText("Demo simulation • no account required");
-        setSimOutput(JSON.stringify({
-          status: "simulation_only",
-          message: "Sign in to run authenticated balance and ledger commands.",
-          prompt: instruction,
-          side_effects: "none",
-        }, null, 2));
-        return;
-      }
-      const res = await fetch("/api/agent/command", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: instruction }),
-      });
-      const data = await res.json();
-      const ms = Math.round(performance.now() - start);
-      setLatencyText(`Completed in ${ms}ms • HTTP ${res.status}`);
-      setSimOutput(JSON.stringify(data, null, 2));
-    } catch {
-      const ms = Math.round(performance.now() - start);
-      setLatencyText(`Simulated response • ${ms}ms`);
-      setSimOutput(
-        JSON.stringify(
-          {
-            prompt: instruction,
-            status: "ready_to_send",
-            network: "Polygon Amoy Testnet",
-            payment: {
-              amount: 50.0,
-              currency: "POL",
-              estimated_fee: "< 0.001 POL",
-              balance_check: "verified",
-            },
-            next_step: "Confirm transfer with 1 click",
-          },
-          null,
-          2
-        )
-      );
-    } finally {
-      setIsSimulating(false);
-    }
+  const handleSimulate = () => {
+    setLatencyText("Example only — no wallet request");
+    setSimOutput(JSON.stringify({status:"example_only", instruction, next_step:"Sign in, connect an Amoy wallet, and review the payment on the dashboard. No balance was checked here."},null,2));
   };
 
   return (
@@ -104,7 +40,7 @@ export default function PaymentSimulator() {
             Try Sending a Payment with AI
           </h3>
           <p className="font-sans text-zinc-400 mt-2.5 text-sm leading-relaxed">
-            Type payments in plain English. BlockPay interprets your request, checks your balance, and prepares the transfer instantly.
+            Explore an example instruction. Actual balance checks and wallet approval happen after sign-in.
           </p>
         </div>
 

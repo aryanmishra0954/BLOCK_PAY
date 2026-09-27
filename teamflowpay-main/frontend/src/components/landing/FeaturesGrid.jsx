@@ -12,18 +12,18 @@ export default function FeaturesGrid() {
   const capabilities = [
     {
       icon: Send,
-      title: "Instant Transfers",
-      desc: "Send crypto to any Polygon address in seconds with near-zero network fees. Perfect for payroll, vendor payments, or everyday transfers.",
+      title: "Testnet Transfers",
+      desc: "Send test POL to an EVM address on Polygon Amoy. Verify the destination carefully before approving in your wallet.",
     },
     {
       icon: Zap,
       title: "Fast Confirmations",
-      desc: "Transactions confirm on Polygon in under 3 seconds. No waiting for banking clearance, weekend delays, or cross-border lags.",
+      desc: "Confirmation time depends on the network. BlockPay verifies receipts and requires two block confirmations before displaying success.",
     },
     {
       icon: ShieldCheck,
       title: "Balance Protection",
-      desc: "BlockPay automatically verifies your available funds before sending, preventing failed transactions and overdraft fees.",
+      desc: "BlockPay checks the network balance and estimates gas before requesting wallet approval. Network execution can still fail.",
     },
     {
       icon: Key,
@@ -32,13 +32,13 @@ export default function FeaturesGrid() {
     },
     {
       icon: Globe,
-      title: "Live Currency Rates",
-      desc: "Instant conversion between POL, USD, EUR, and INR so you always know the exact fiat value of every payment.",
+      title: "Test Tokens Only",
+      desc: "Payments use Amoy test POL, which has no monetary value. This prototype does not exchange fiat currencies.",
     },
     {
       icon: FileCheck2,
       title: "Transaction History",
-      desc: "Every transfer is recorded in the BlockPay ledger; on-chain links appear only after a verified Polygon receipt.",
+      desc: "BlockPay records submitted transfers and verifies network status. Import outside transfers by hash; explorer links allow independent checking.",
     },
   ];
 
@@ -53,7 +53,7 @@ export default function FeaturesGrid() {
             Everything You Need for Fast Payments
           </h3>
           <p className="font-sans text-zinc-400 mt-3 text-sm leading-relaxed">
-            Simple, reliable crypto payments built on Polygon with instant confirmations and low fees.
+            Wallet-approved test payments with independently checked network status.
           </p>
         </div>
 

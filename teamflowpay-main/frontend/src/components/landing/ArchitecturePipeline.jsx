@@ -25,7 +25,7 @@ export default function ArchitecturePipeline({ onGetStarted, isAuthenticated }) 
       num: "04",
       icon: CheckCircle2,
       title: "Instant Confirmation",
-      desc: "Your payment confirms on Polygon Amoy in seconds and is recorded in your history.",
+      desc: "BlockPay checks the network receipt. Pending and failed transfers remain distinct from confirmed payments.",
     },
   ];
 
@@ -40,7 +40,7 @@ export default function ArchitecturePipeline({ onGetStarted, isAuthenticated }) 
             Four Simple Steps to Pay Anyone
           </h3>
           <p className="font-sans text-zinc-400 mt-3 text-sm leading-relaxed">
-            From natural language instruction to on-chain confirmation in seconds.
+            From payment instructions to wallet approval and verified network status.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export default function ArchitecturePipeline({ onGetStarted, isAuthenticated }) 
             Ready to start sending payments?
           </h4>
           <p className="font-sans text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto mb-6">
-            Start at zero, then add clearly labelled test funds. Test payments, invoices, and accounting flows without real money.
+            Connect a wallet on Polygon Amoy and obtain test POL from a faucet. Payments require wallet approval and network confirmation.
           </p>
           <button
             onClick={onGetStarted}

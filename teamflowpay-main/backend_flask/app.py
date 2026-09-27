@@ -23,6 +23,7 @@ from routes.agent import agent_bp
 from routes.auth import auth_bp
 from routes.transactions import transactions_bp
 from routes.contacts import contacts_bp
+from routes.chain import chain_bp, init_chain_tables
 
 def create_app() -> Flask:
     """Create and configure the Flask application."""
@@ -90,6 +91,8 @@ def create_app() -> Flask:
         })
 
     init_db()
+    init_chain_tables()
+    application.register_blueprint(chain_bp)
 
     application.register_blueprint(agent_bp)
     application.register_blueprint(auth_bp)

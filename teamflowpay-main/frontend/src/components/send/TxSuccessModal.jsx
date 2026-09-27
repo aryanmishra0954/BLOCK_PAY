@@ -40,14 +40,14 @@ export default function TxSuccessModal({
         </div>
 
         <h3 className="font-display text-xl font-bold text-white mb-1">
-          {isOnChain ? "On-Chain Payment Broadcasted!" : "Payment Sent!"}
+          {successData.status === "success" ? "Payment Confirmed" : successData.status === "failed" ? "Payment Failed" : "Payment Submitted"}
         </h3>
 
         <div className="flex items-center justify-center gap-2 mb-5">
           {isOnChain ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              Broadcasted • Awaiting Polygon receipt
+              {successData.status === "success" ? "Verified on Polygon Amoy" : successData.status === "failed" ? "Network execution failed" : "Pending — check History for confirmation"}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
@@ -57,9 +57,10 @@ export default function TxSuccessModal({
           )}
         </div>
 
+        {successData.warning && <p role="alert" className="text-amber-300 text-sm mb-4">{successData.warning}</p>}
         <div className="bg-[#0c0d10] rounded-xl p-4 mb-6 border border-[#20242c] text-xs font-mono space-y-2.5 text-left">
           <div className="flex justify-between items-center">
-            <span className="text-zinc-500 font-sans">Amount Sent:</span>
+            <span className="text-zinc-500 font-sans">Amount:</span>
             <span className="font-bold text-white text-sm">
               {successData.amount} {successData.currency || "POL"}
             </span>

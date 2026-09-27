@@ -83,7 +83,7 @@ export default function AICommandCenter({ onCommandExecuted }) {
 
   const handleConfirmPayment = async () => {
     if (!receipt?.command || isConfirmingPayment) return;
-    const params = receipt.command.parameters || receipt.command.data || {};
+    const params = receipt.data || {};
     setIsConfirmingPayment(true);
     setErrorMsg(null);
     try {
@@ -278,11 +278,11 @@ export default function AICommandCenter({ onCommandExecuted }) {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-400">Payment Status</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                    {receipt.executedTx ? "✓ Ledger Confirmed" : "Awaiting your confirmation"}
+                    {receipt.executedTx ? "Submitted — check History" : "Awaiting your confirmation"}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between pt-1 border-t border-[#1a1e27]">
-                  <span className="text-xs text-zinc-400">Amount Sent:</span>
+                  <span className="text-xs text-zinc-400">{receipt.executedTx ? "Amount Submitted:" : "Amount to Send:"}</span>
                   <span className="font-mono text-base font-bold text-white">
                     {receipt.command?.parameters?.amount || receipt.data?.amount} {receipt.command?.parameters?.currency || "POL"}
                   </span>

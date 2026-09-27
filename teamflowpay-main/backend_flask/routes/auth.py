@@ -110,9 +110,7 @@ def login():
         return jsonify({"success": False, "error": "Invalid email or password."}), 401
 
     if user.get("password_hash") == "GOOGLE_OAUTH_AUTHENTICATED":
-        new_hash = generate_password_hash(password)
-        update_user_password(user["id"], new_hash)
-        user["password_hash"] = new_hash
+        return jsonify({"success": False, "error": "Use Google sign-in for this account."}), 401
     elif not check_password_hash(user["password_hash"], password):
         return jsonify({"success": False, "error": "Invalid email or password."}), 401
 

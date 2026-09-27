@@ -561,7 +561,7 @@ def add_transaction(user_id: str, tx_type: str, amount: float, counterparty_addr
         cursor.execute("UPDATE users SET balance = ? WHERE id = ?", (new_bal, user_id))
 
     # Bi-directional P2P transfer: if counterparty is another registered user, credit their ledger
-    if tx_type == "sent" and counterparty_address:
+    if status == "success" and tx_type == "sent" and counterparty_address:
         clean_addr = counterparty_address.strip().lower()
         cursor.execute("SELECT * FROM users WHERE LOWER(wallet_address) = ? OR LOWER(email) = ?", (clean_addr, clean_addr))
         recipient_user = cursor.fetchone()

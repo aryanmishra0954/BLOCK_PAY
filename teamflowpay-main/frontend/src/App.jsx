@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { WalletProvider } from "./context/WalletContext";
 import { PriceProvider } from "./context/PriceContext";
 import Navbar from "./components/Navbar";
+import WalletConnection from "./components/WalletConnection";
 import Footer from "./components/Footer";
 
 import LandingPage from "./pages/LandingPage";
@@ -41,6 +42,7 @@ function Layout({ children }) {
       <div className="page-ambient-grid" aria-hidden="true" />
       {!isLanding && <Navbar />}
       <main className={`flex-1 relative z-10 ${!isLanding ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full" : ""}`}>
+        {!isLanding && <WalletConnection />}
         {children}
       </main>
       {!isLanding && <Footer />}

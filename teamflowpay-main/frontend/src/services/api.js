@@ -58,6 +58,12 @@ export const BlockPayAPI = {
     }
   },
 
+  chain: {
+    wallet: () => BlockPayAPI.request("/api/chain/wallet"),
+    challenge: (address) => BlockPayAPI.request("/api/chain/challenge", {method:"POST",body:JSON.stringify({address})}),
+    connect: (signature) => BlockPayAPI.request("/api/chain/connect", {method:"POST",body:JSON.stringify({signature})}),
+    record: (tx_hash) => BlockPayAPI.request("/api/chain/transactions", {method:"POST",body:JSON.stringify({tx_hash})}),
+  },
   auth: {
     async register(email, password, fullName, walletAddress = "") {
       return await BlockPayAPI.request("/api/auth/register", {
@@ -116,7 +122,7 @@ export const BlockPayAPI = {
 
   transactions: {
     async getAll(limit = 100) {
-      const url = `/api/transactions?limit=${limit}`;
+      const url = `/api/chain/transactions?limit=${limit}`;
       return await BlockPayAPI.request(url, { method: "GET" });
     },
 

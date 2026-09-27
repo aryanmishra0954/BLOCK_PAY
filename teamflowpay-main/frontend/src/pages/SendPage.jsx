@@ -20,13 +20,7 @@ export default function SendPage() {
   const [activePolEquivalent, setActivePolEquivalent] = useState(0);
 
   const handleSendTransaction = async (txData) => {
-    let txResult;
-    if (txData.mode === "on_chain") {
-      txResult = await sendOnChainTransaction(txData);
-    } else {
-      await new Promise((r) => setTimeout(r, 600));
-      txResult = await sendTransaction(txData);
-    }
+    const txResult = await sendTransaction(txData);
     setSuccessData(txResult);
     return txResult;
   };

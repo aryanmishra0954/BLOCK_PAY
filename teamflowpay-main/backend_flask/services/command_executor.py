@@ -46,28 +46,17 @@ def is_valid_blockchain_address(addr: str) -> bool:
     return bool(re.match(r"^(?:0x)?[0-9a-fA-F]{40}$", clean))
 
 def find_matching_contact(name_query: str, user_id: str = None) -> dict:
-    if not name_query or not isinstance(name_query, str):
+    if not name_query or not isinstance(name_query, str) or not user_id:
         return None
-    q = name_query.strip().lower()
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        if not user_id:
-            return None
-        cur.execute(
-            "SELECT id, name, address, email FROM contacts WHERE user_id = ? AND (LOWER(name) = ? OR LOWER(name) LIKE ? OR ? LIKE '%' || LOWER(name) || '%') LIMIT 1",
-            (user_id, q, f"%{q}%", q)
-        )
-        row = cur.fetchone()
-        if row:
-            conn.close()
-            return dict(row)
+    q = name_query.strip().casefold()
+    contacts = get_user_contacts(user_id)
+    matches = [c for c in contacts if q == c["name"].strip().casefold()]
+    if not matches:
+        matches = [c for c in contacts if q in c["name"].casefold()]
+    if len(matches) > 1:
+        raise CommandError("Multiple contacts match. Enter the recipient's exact BlockPay address.", 400)
+    return matches[0] if matches else None
 
-        conn.close()
-    except Exception as e:
-        print(f"[ContactSearch] Error searching database: {e}")
-
-    return None
 
 def normalize_command(command: dict, user: dict = None) -> dict:
     if not isinstance(command, dict):
@@ -91,7 +80,7 @@ def normalize_command(command: dict, user: dict = None) -> dict:
     action = command.get("action")
 
     vendor_keys = [
-        "vendor", "recipient", "client_name", "client", "to", "payee",
+        "recipient", "vendor", "client_name", "client", "to", "payee",
         "receiver", "contact", "name", "target", "beneficiary", "user"
     ]
     extracted_vendor = None
@@ -136,6 +125,8 @@ def normalize_command(command: dict, user: dict = None) -> dict:
                 data["amount"] = float(clean_amt)
             except ValueError:
                 data["amount"] = None
+        elif isinstance(amt_val, bool):
+            data["amount"] = None
         elif isinstance(amt_val, (int, float)):
             data["amount"] = float(amt_val)
 
@@ -216,7 +207,9 @@ def validate_command(command: dict, user: dict = None) -> dict:
 _HANDLERS = {}
 
 def execute_command(command: dict, user: dict = None) -> dict:
-    normalize_command(command, user=user)
+    validation = validate_command(command, user=user)
+    if not validation["valid"]:
+        raise CommandError(validation["errors"][0], 400)
 
     handler = _HANDLERS.get(command["action"])
     if handler is None:
@@ -225,35 +218,43 @@ def execute_command(command: dict, user: dict = None) -> dict:
     return handler(command.get("data") or {}, user=user)
 
 def _handle_create_payment(data: dict, user: dict = None) -> dict:
-    recipient_addr = data.get("recipient")
-    vendor_name = data.get("vendor") or "Aryan"
-
-    if user:
-        if not recipient_addr or not recipient_addr.startswith("0x") or len(recipient_addr) != 42:
-            contacts = get_user_contacts(user["id"])
-            matched = next((c for c in contacts if vendor_name.lower() in c["name"].lower() or c["name"].lower() in vendor_name.lower()), None)
-            if matched:
-                recipient_addr = matched["address"]
-                vendor_name = matched["name"]
-        recipient = get_user_by_email(recipient_addr) if isinstance(recipient_addr, str) and "@" in recipient_addr else None
-        if not recipient:
-            conn = get_db_connection(); cur = conn.cursor()
-            cur.execute("SELECT * FROM users WHERE LOWER(wallet_address) = ?", (recipient_addr.strip().lower(),))
-            recipient = cur.fetchone(); conn.close()
-        if not recipient:
-            raise CommandError("Recipient must be a registered BlockPay account.", 400)
-    else:
+    if not user:
         raise CommandError("Authentication required.", 401)
-
-    amount = float(data.get("amount", 50.0))
+    raw_amount = data.get("amount")
+    if isinstance(raw_amount, bool) or not isinstance(raw_amount, (int, float)) or not math.isfinite(raw_amount) or raw_amount <= 0:
+        raise CommandError("A positive payment amount is required.", 400)
+    amount = float(raw_amount)
     currency = data.get("currency", "POL")
+    if currency != "POL":
+        raise CommandError("Amoy payments support test POL only.", 400)
+    recipient_addr = data.get("recipient")
+    if not isinstance(recipient_addr, str) or not recipient_addr.strip():
+        raise CommandError("A registered BlockPay recipient is required.", 400)
+    from routes.chain import wallet_for
+    from services.chain_service import address, balance_for
+    from decimal import Decimal
+    sender_address = wallet_for(user['id'])
+    if not sender_address:
+        raise CommandError('Connect and verify a wallet first.', 400)
+    try:
+        recipient_addr = address(recipient_addr)
+        available = Decimal(balance_for(sender_address))
+    except ValueError as exc:
+        raise CommandError(str(exc), 400)
+    except ConnectionError as exc:
+        raise CommandError(str(exc), 503)
+    if recipient_addr == sender_address:
+        raise CommandError('You cannot pay yourself.', 400)
+    if available <= Decimal(str(amount)):
+        raise CommandError('Insufficient test POL. Leave a balance for the network fee.', 400)
+    vendor_name = data.get('vendor_name') or recipient_addr
     desc = data.get("description", f"Payment to {vendor_name}")
 
     payment_record = {
         "id": str(uuid.uuid4()),
         "vendor": vendor_name,
         "recipient": recipient_addr,
-        "amount": amount,
+        "amount": format(Decimal(str(amount)), "f"),
         "currency": currency,
         "due_date": data.get("due_date"),
         "description": desc,
@@ -265,6 +266,8 @@ def _handle_create_payment(data: dict, user: dict = None) -> dict:
     return payment_record
 
 def _handle_show_pending_payments(data: dict, user: dict = None) -> dict:
+    raise CommandError("Open History to view pending Amoy transactions. Legacy invoices do not represent blockchain settlement.", 400)
+
     filter_type = data.get("filter", "all")
     vendor_filter = data.get("vendor")
 
@@ -320,6 +323,8 @@ def _safe_parse_date(d_str):
         return datetime.utcnow() + timedelta(days=7)
 
 def _handle_export_report(data: dict, user: dict = None) -> dict:
+    raise CommandError("Use Export CSV on the History page for verified Amoy records.", 400)
+
     period = data.get("period", "all")
     fmt = data.get("format", "csv")
 
@@ -377,49 +382,19 @@ def _handle_add_client(data: dict, user: dict = None) -> dict:
     }
 
 def _handle_check_balance_reminders(data: dict, user: dict = None) -> dict:
-    user_balance = float(user["balance"]) if user else float(data.get("balance", 10000.0))
-    wallet_address = user["wallet_address"] if user else data.get("walletAddress", "0x742d...5f0bEb")
-
-    user_id = user["id"] if user else None
-    if not user_id:
-        from data.db import get_user_by_email
-        trader = get_user_by_email("trader@blockpay.io")
-        user_id = trader["id"] if trader else None
-
-    invoices = get_user_invoices(user_id, status="pending") if user_id else []
-    total_pending = sum(float(i["amount"]) for i in invoices)
-
-    low_balance_payments = []
-    for inv in invoices:
-        amt = float(inv["amount"])
-        if amt > user_balance:
-            low_balance_payments.append({
-                "vendor": inv["client_name"],
-                "amount": amt,
-                "currency": inv.get("currency", "POL"),
-                "due_date": inv.get("due_date", ""),
-                "shortfall": amt - user_balance,
-            })
-
-    warning_msg = (
-        f"⚠️ Low balance warning! {len(low_balance_payments)} upcoming obligations exceed current liquid balance."
-        if low_balance_payments
-        else f"✅ Balance safe! Available balance ({user_balance:,.2f} POL) comfortably covers all pending transfers ({total_pending:,.2f} POL)."
-    )
-
-    return {
-        "success": True,
-        "action": "check_balance_reminders",
-        "data": {
-            "current_balance": user_balance,
-            "wallet_address": wallet_address,
-            "total_pending_payments": len(invoices),
-            "total_pending_amount": total_pending,
-            "low_balance_count": len(low_balance_payments),
-            "low_balance_payments": low_balance_payments,
-            "message": warning_msg,
-        },
-    }
+    from routes.chain import wallet_for
+    from services.chain_service import balance_for
+    if not user:
+        raise CommandError('Authentication required.', 401)
+    wallet = wallet_for(user['id'])
+    if not wallet:
+        raise CommandError('Connect a wallet first.', 400)
+    try:
+        balance = balance_for(wallet)
+    except ConnectionError as exc:
+        raise CommandError(str(exc), 503)
+    return {'current_balance':balance, 'wallet_address':wallet,
+            'message': f'Amoy balance: {balance} test POL. Network fees are additional; no invoice coverage guarantee is made.'}
 
 _HANDLERS = {
     "create_payment": _handle_create_payment,
