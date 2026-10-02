@@ -7,9 +7,7 @@ import QrDisplayCard from "../components/receive/QrDisplayCard";
 import PaymentRequestBuilder from "../components/receive/PaymentRequestBuilder";
 
 export default function ReceivePage() {
-  const { walletAddress } = useWallet();
-
-  if (!walletAddress) return <p>Connect and verify your wallet above to receive Amoy test POL.</p>;
+  const { walletAddress, connectWallet, isConnecting } = useWallet();
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
@@ -30,10 +28,23 @@ export default function ReceivePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QrDisplayCard walletAddress={walletAddress} />
-        <PaymentRequestBuilder walletAddress={walletAddress} />
-      </div>
+      {!walletAddress ? (
+        <div className="card-base p-8 text-center bg-[#101216] border border-[#20242c] space-y-4">
+          <p className="text-sm text-zinc-300 font-sans">Connect and verify your wallet to receive Polygon Amoy test POL.</p>
+          <button
+            onClick={connectWallet}
+            disabled={isConnecting}
+            className="btn-primary px-5 py-2.5 rounded-xl text-xs font-semibold"
+          >
+            {isConnecting ? "Connecting..." : "Connect Web3 Wallet"}
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <QrDisplayCard walletAddress={walletAddress} />
+          <PaymentRequestBuilder walletAddress={walletAddress} />
+        </div>
+      )}
     </div>
   );
 }

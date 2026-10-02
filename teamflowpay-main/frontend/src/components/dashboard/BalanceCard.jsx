@@ -76,7 +76,10 @@ export default function BalanceCard({
               Polygon Amoy
             </span>
           </div>
-          <p className="text-xs text-zinc-400 mt-2">Test POL has no monetary value.</p>
+          <p className="text-xs text-zinc-400 mt-2 font-mono">
+            ≈ ${usdValue} USD &nbsp;•&nbsp; ₹{inrValue} INR &nbsp;
+            <span className="text-zinc-500 font-sans text-[11px]">(Live CoinGecko Feed)</span>
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">

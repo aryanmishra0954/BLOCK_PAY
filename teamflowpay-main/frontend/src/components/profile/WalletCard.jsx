@@ -7,11 +7,12 @@ export default function WalletCard({
   onClaimFaucet,
 }) {
   const [copied, setCopied] = useState(false);
-  const fallbackAddress = walletAddress || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+  const displayAddress = walletAddress || "No linked Polygon address";
 
   const handleCopy = async () => {
+    if (!walletAddress) return;
     try {
-      await navigator.clipboard.writeText(fallbackAddress);
+      await navigator.clipboard.writeText(walletAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
@@ -33,7 +34,7 @@ export default function WalletCard({
           </p>
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs font-semibold text-white truncate">
-              {fallbackAddress}
+              {displayAddress}
             </span>
             <button
               type="button"

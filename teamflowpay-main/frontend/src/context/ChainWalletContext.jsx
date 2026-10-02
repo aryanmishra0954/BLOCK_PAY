@@ -44,12 +44,22 @@ export function WalletProvider({children}){
   const wei=parsePol(amount);sending.current=true;let hash;
   try{const owner=user.id,p=await ensureAmoy(),accounts=await p.request({method:'eth_accounts'});
    if(accounts?.[0]?.toLowerCase()!==walletAddress.toLowerCase())throw Error('Active wallet differs from your verified wallet. Reconnect it.');
-   const tx={from:accounts[0],to,value:'0x'+wei.toString(16)};
-   const gas=BigInt(await p.request({method:'eth_estimateGas',params:[tx]})),price=BigInt(await p.request({method:'eth_gasPrice'}));
-   const available=BigInt(await p.request({method:'eth_getBalance',params:[accounts[0],'latest']}));
-   if(available<wei+gas*price)throw Error('Insufficient test POL for the amount plus the estimated network fee.');
-   if(identity.current!==owner)throw Error('BlockPay account changed. Start again.');
-   hash=await p.request({method:'eth_sendTransaction',params:[tx]});
+   const price = BigInt(await p.request({method: 'eth_gasPrice'}));
+   const minTip = 30000000000n; // 30 Gwei (Polygon Amoy requires >= 25 Gwei)
+   const basePrice = price > minTip ? price : minTip;
+   const maxFee = basePrice + minTip;
+   const tx = {
+    from: accounts[0],
+    to,
+    value: '0x' + wei.toString(16),
+    maxPriorityFeePerGas: '0x' + minTip.toString(16),
+    maxFeePerGas: '0x' + maxFee.toString(16),
+   };
+   const gas = BigInt(await p.request({method: 'eth_estimateGas', params: [{from: accounts[0], to, value: '0x' + wei.toString(16)}]}));
+   const available = BigInt(await p.request({method: 'eth_getBalance', params: [accounts[0], 'latest']}));
+   if (available < wei + gas * maxFee) throw Error('Insufficient test POL in your wallet for the amount plus network fee (Polygon requires >= 25 Gwei gas tip).');
+   if (identity.current !== owner) throw Error('BlockPay account changed. Start again.');
+   hash = await p.request({method: 'eth_sendTransaction', params: [tx]});
    const payment={hash,amount:String(amount),currency:'POL',to,isOnChain:true,status:'pending'};setLast(payment);
    const key=`amoy-pending:${owner}`,pending=JSON.parse(localStorage.getItem(key)||'[]');
    localStorage.setItem(key,JSON.stringify([...new Set([...pending,hash])]));

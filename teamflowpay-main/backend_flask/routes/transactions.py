@@ -170,8 +170,6 @@ def record_invoice():
 
 @transactions_bp.route("/invoices/<invoice_id>/pay", methods=["POST"])
 def pay_invoice_route(invoice_id):
-    return jsonify(success=False,error="Database invoice settlement is retired. Pay through the testnet send flow; invoice reconciliation is not yet supported."), 410
-
     user = _resolve_user()
     if not user:
         return jsonify({"success": False, "error": "Authentication required."}), 401

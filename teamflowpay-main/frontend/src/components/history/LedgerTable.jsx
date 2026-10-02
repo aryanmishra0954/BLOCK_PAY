@@ -134,7 +134,7 @@ export default function LedgerTable({
                     </td>
 
                     <td className="px-5 py-4 whitespace-nowrap text-right font-mono">
-                      {hash ? (
+                      {tx.is_on_chain && hash ? (
                         <a
                           href={`https://amoy.polygonscan.com/tx/${hash}`}
                           target="_blank"
@@ -147,7 +147,10 @@ export default function LedgerTable({
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <span className="text-zinc-600 text-[11px]">Internal DB</span>
+                        <span className="inline-flex items-center gap-1 text-zinc-400 text-[11px] font-sans" title={hash ? `Internal Hash: ${hash}` : "Instant P2P Ledger"}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          <span>Internal P2P</span>
+                        </span>
                       )}
                     </td>
                   </tr>

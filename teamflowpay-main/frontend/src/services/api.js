@@ -202,5 +202,40 @@ export const BlockPayAPI = {
       });
     },
   },
+
+  chain: {
+    async challenge(address) {
+      return await BlockPayAPI.request("/api/chain/challenge", {
+        method: "POST",
+        body: JSON.stringify({ address }),
+      });
+    },
+
+    async connect(signature) {
+      return await BlockPayAPI.request("/api/chain/connect", {
+        method: "POST",
+        body: JSON.stringify({ signature }),
+      });
+    },
+
+    async wallet() {
+      return await BlockPayAPI.request("/api/chain/wallet", {
+        method: "GET",
+      });
+    },
+
+    async record(tx_hash) {
+      return await BlockPayAPI.request("/api/chain/transactions", {
+        method: "POST",
+        body: JSON.stringify({ tx_hash }),
+      });
+    },
+
+    async getTransactions() {
+      return await BlockPayAPI.request("/api/chain/transactions", {
+        method: "GET",
+      });
+    },
+  },
 };
 
